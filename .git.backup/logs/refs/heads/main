@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 3311ce69b76694375bf9d83256261aa99bfda1ba Avi Lurie <avicomputer@Avis-MacBook-2.local> 1736957247 +0200	commit (initial): Initial commit: Smart Mirror core files
+3311ce69b76694375bf9d83256261aa99bfda1ba b5eebe5600f46522d5e6cc3e6fb91906eab26fa8 Avi Lurie <avicomputer@Avis-MacBook-2.local> 1740677089 +0200	commit: Initial commit: Smart Mirror implementation with emotion detection and conversation capabilities
+b5eebe5600f46522d5e6cc3e6fb91906eab26fa8 b5eebe5600f46522d5e6cc3e6fb91906eab26fa8 Avi Lurie <avicomputer@Avis-MacBook-2.local> 1740677138 +0200	Branch: renamed refs/heads/main to refs/heads/main
+b5eebe5600f46522d5e6cc3e6fb91906eab26fa8 a593e45e80c5d532bbf6945a58b9d3efd3887763 Avi Lurie <avicomputer@Avis-MacBook-2.local> 1740677338 +0200	commit: Initial commit: Smart Mirror implementation
