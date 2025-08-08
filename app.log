@@ -1,0 +1,307 @@
+2025-04-09 17:01:28,537 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:01:33,247 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:01:33,607 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:01:33,607 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:01:51,144 - __main__ - INFO - Login attempt with user_id: '1234'
+2025-04-09 17:01:53,196 - __main__ - INFO - Successfully logged in user 1234
+2025-04-09 17:01:54,137 - __main__ - INFO - Starting web analysis for user: 1234
+2025-04-09 17:01:54,138 - __main__ - INFO - Mirror object state: recording=False, user_id=1234
+2025-04-09 17:01:54,138 - __main__ - ERROR - Error in web analysis: 'WebMirror' object has no attribute 'cap'
+2025-04-09 17:01:54,141 - __main__ - ERROR - Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/app.py", line 370, in analyze
+    ret, frame = mirror.cap.read()
+AttributeError: 'WebMirror' object has no attribute 'cap'
+
+2025-04-09 17:01:54,142 - __main__ - INFO - Falling back to simplified analysis...
+2025-04-09 17:01:54,142 - __main__ - ERROR - simplified_analyze method not found on mirror object
+2025-04-09 17:02:30,853 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:02:38,900 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:02:39,730 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:02:39,730 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:02:50,583 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:02:55,043 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:02:55,398 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:02:55,398 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:03:03,163 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:03:08,522 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:03:08,959 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:03:08,960 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:03:21,922 - __main__ - INFO - Login attempt with user_id: '1234'
+2025-04-09 17:03:28,794 - __main__ - INFO - Successfully logged in user 1234
+2025-04-09 17:03:30,381 - __main__ - INFO - Starting web analysis for user: 1234
+2025-04-09 17:03:30,382 - __main__ - INFO - Mirror object state: recording=False, user_id=1234
+2025-04-09 17:03:35,582 - __main__ - INFO - Web analysis complete: neutral, ['relaxed']
+2025-04-09 17:04:12,288 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:04:18,339 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:04:18,823 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:04:18,823 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:04:22,305 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:04:26,427 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:04:26,427 - __main__ - ERROR - Error starting mirror: SmartMirror.__init__() got an unexpected keyword argument 'user_id'
+2025-04-09 17:04:26,429 - __main__ - ERROR - Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/app.py", line 115, in start_mirror
+    mirror = WebMirror(user_id=user_id)
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 39, in __init__
+    self.mirror = SmartMirror(user_id=self.user_id)
+TypeError: SmartMirror.__init__() got an unexpected keyword argument 'user_id'
+
+2025-04-09 17:04:29,643 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:04:34,181 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:04:34,182 - __main__ - ERROR - Error starting mirror: SmartMirror.__init__() got an unexpected keyword argument 'user_id'
+2025-04-09 17:04:34,183 - __main__ - ERROR - Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/app.py", line 115, in start_mirror
+    mirror = WebMirror(user_id=user_id)
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 39, in __init__
+    self.mirror = SmartMirror(user_id=self.user_id)
+TypeError: SmartMirror.__init__() got an unexpected keyword argument 'user_id'
+
+2025-04-09 17:04:34,533 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:04:34,533 - __main__ - ERROR - Error starting mirror: SmartMirror.__init__() got an unexpected keyword argument 'user_id'
+2025-04-09 17:04:34,533 - __main__ - ERROR - Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/app.py", line 115, in start_mirror
+    mirror = WebMirror(user_id=user_id)
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 39, in __init__
+    self.mirror = SmartMirror(user_id=self.user_id)
+TypeError: SmartMirror.__init__() got an unexpected keyword argument 'user_id'
+
+2025-04-09 17:04:38,771 - __main__ - INFO - Login attempt with user_id: '1234'
+2025-04-09 17:04:38,771 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:04:38,771 - __main__ - ERROR - Error starting mirror: SmartMirror.__init__() got an unexpected keyword argument 'user_id'
+2025-04-09 17:04:38,772 - __main__ - ERROR - Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/app.py", line 115, in start_mirror
+    mirror = WebMirror(user_id=user_id)
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 39, in __init__
+    self.mirror = SmartMirror(user_id=self.user_id)
+TypeError: SmartMirror.__init__() got an unexpected keyword argument 'user_id'
+
+2025-04-09 17:04:38,772 - __main__ - ERROR - Error in login route: 'bool' object has no attribute 'login_user'
+2025-04-09 17:04:41,093 - __main__ - INFO - Starting web analysis for user: guest
+2025-04-09 17:04:41,094 - __main__ - INFO - Mirror object state: recording=None, user_id=None
+2025-04-09 17:04:41,094 - __main__ - ERROR - web_analyze_state method not found on mirror object
+2025-04-09 17:05:15,834 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:05:20,607 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:05:23,036 - __main__ - ERROR - Error starting mirror: name 'logger' is not defined
+2025-04-09 17:05:23,040 - __main__ - ERROR - Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 102, in ensure_camera_initialized
+    logger.info("Camera initialized successfully")
+NameError: name 'logger' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/app.py", line 115, in start_mirror
+    mirror = WebMirror(user_id=user_id)
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 44, in __init__
+    self.ensure_camera_initialized()
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 105, in ensure_camera_initialized
+    logger.error(f"Error initializing camera: {e}")
+NameError: name 'logger' is not defined
+
+2025-04-09 17:05:30,928 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:05:35,841 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:05:37,895 - __main__ - ERROR - Error starting mirror: name 'logger' is not defined
+2025-04-09 17:05:37,897 - __main__ - ERROR - Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 102, in ensure_camera_initialized
+    logger.info("Camera initialized successfully")
+NameError: name 'logger' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/app.py", line 115, in start_mirror
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 44, in __init__
+    self.ensure_camera_initialized()
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 105, in ensure_camera_initialized
+    logger.error(f"Error initializing camera: {e}")
+NameError: name 'logger' is not defined
+
+2025-04-09 17:05:48,596 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:05:52,970 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:05:55,047 - __main__ - ERROR - Error starting mirror: name 'logger' is not defined
+2025-04-09 17:05:55,049 - __main__ - ERROR - Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 102, in ensure_camera_initialized
+    logger.info("Camera initialized successfully")
+NameError: name 'logger' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/app.py", line 114, in start_mirror
+    mirror = WebMirror(user_id=user_id)
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 44, in __init__
+    self.ensure_camera_initialized()
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 105, in ensure_camera_initialized
+    logger.error(f"Error initializing camera: {e}")
+NameError: name 'logger' is not defined
+
+2025-04-09 17:06:02,805 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:06:03,590 - __main__ - ERROR - Error starting mirror: name 'logger' is not defined
+2025-04-09 17:06:03,592 - __main__ - ERROR - Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 102, in ensure_camera_initialized
+    logger.info("Camera initialized successfully")
+NameError: name 'logger' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/app.py", line 114, in start_mirror
+    mirror = WebMirror(user_id=user_id)
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 44, in __init__
+    self.ensure_camera_initialized()
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 105, in ensure_camera_initialized
+    logger.error(f"Error initializing camera: {e}")
+NameError: name 'logger' is not defined
+
+2025-04-09 17:06:07,325 - __main__ - INFO - Login attempt with user_id: '1234'
+2025-04-09 17:06:07,326 - __main__ - INFO - Initializing WebMirror with user_id: 1234
+2025-04-09 17:06:08,348 - __main__ - ERROR - Error starting mirror: name 'logger' is not defined
+2025-04-09 17:06:08,350 - __main__ - ERROR - Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 102, in ensure_camera_initialized
+    logger.info("Camera initialized successfully")
+NameError: name 'logger' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/avicomputer/AI mirror take 2/app.py", line 114, in start_mirror
+    mirror = WebMirror(user_id=user_id)
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 44, in __init__
+    self.ensure_camera_initialized()
+  File "/Users/avicomputer/AI mirror take 2/web_mirror.py", line 105, in ensure_camera_initialized
+    logger.error(f"Error initializing camera: {e}")
+NameError: name 'logger' is not defined
+
+2025-04-09 17:06:08,473 - __main__ - ERROR - Failed to initialize mirror
+2025-04-09 17:06:40,751 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:06:46,178 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:06:48,459 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:06:48,459 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:07:02,077 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:07:07,347 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:07:09,572 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:07:09,572 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:07:16,328 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:07:21,130 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:07:23,380 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:07:23,380 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:07:37,888 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:07:43,117 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:07:45,319 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:07:45,320 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:07:58,565 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:08:03,169 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:08:05,166 - __main__ - INFO - WebMirror instance created successfully
+2025-04-09 17:08:05,231 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:08:05,232 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:08:14,247 - __main__ - INFO - Login attempt with user_id: '1234'
+2025-04-09 17:08:15,239 - __main__ - INFO - Starting web analysis for user: 1234
+2025-04-09 17:08:15,239 - __main__ - INFO - Mirror object state: recording=False, user_id=guest
+2025-04-09 17:08:45,428 - __main__ - INFO - Starting web analysis for user: 1234
+2025-04-09 17:08:45,429 - __main__ - INFO - Mirror object state: recording=False, user_id=guest
+2025-04-09 17:08:51,481 - __main__ - INFO - Web analysis complete: angry, ['relaxed']
+2025-04-09 17:09:25,489 - __main__ - INFO - Web analysis complete: fear, ['relaxed']
+2025-04-09 17:09:40,979 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:09:45,970 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:09:48,482 - __main__ - INFO - WebMirror instance created successfully
+2025-04-09 17:09:48,568 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:09:48,568 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:09:51,354 - __main__ - INFO - Starting web analysis for user: guest
+2025-04-09 17:09:51,355 - __main__ - INFO - Mirror object state: recording=False, user_id=guest
+2025-04-09 17:10:02,103 - __main__ - INFO - Web analysis complete: happy, ['relaxed']
+2025-04-09 17:10:09,176 - __main__ - INFO - Starting web analysis for user: guest
+2025-04-09 17:10:09,179 - __main__ - INFO - Mirror object state: recording=False, user_id=guest
+2025-04-09 17:10:16,692 - __main__ - INFO - Web analysis complete: neutral, ['relaxed']
+2025-04-09 17:11:00,098 - __main__ - INFO - Starting listening for user: guest
+2025-04-09 17:11:03,187 - __main__ - INFO - Audio saved to /var/folders/kx/lx_28s7j62g17mf6fjm3cjfr0000gn/T/recording.webm, size: 530707 bytes
+2025-04-09 17:11:03,187 - __main__ - INFO - About to convert: /var/folders/kx/lx_28s7j62g17mf6fjm3cjfr0000gn/T/recording.webm to /var/folders/kx/lx_28s7j62g17mf6fjm3cjfr0000gn/T/recording.wav
+2025-04-09 17:11:03,432 - __main__ - INFO - Conversion stdout: b''
+2025-04-09 17:11:03,432 - __main__ - INFO - Conversion stderr: b"ffmpeg version 7.1.1 Copyright (c) 2000-2025 the FFmpeg developers\n  built with Apple clang version 16.0.0 (clang-1600.0.26.6)\n  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/7.1.1_1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libharfbuzz --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox --enable-neon\n  libavutil      59. 39.100 / 59. 39.100\n  libavcodec     61. 19.101 / 61. 19.101\n  libavformat    61.  7.100 / 61.  7.100\n  libavdevice    61.  3.100 / 61.  3.100\n  libavfilter    10.  4.100 / 10.  4.100\n  libswscale      8.  3.100 /  8.  3.100\n  libswresample   5.  3.100 /  5.  3.100\n  libpostproc    58.  3.100 / 58.  3.100\nInput #0, matroska,webm, from '/var/folders/kx/lx_28s7j62g17mf6fjm3cjfr0000gn/T/recording.webm':\n  Metadata:\n    encoder         : Chrome\n  Duration: N/A, start: 0.000000, bitrate: N/A\n  Stream #0:0(eng): Video: h264 (Baseline), yuv420p(tv, smpte170m/bt709/bt709, progressive), 640x480, SAR 1:1 DAR 4:3, 1k tbr, 1k tbn (default)\n  Stream #0:1(eng): Audio: opus, 48000 Hz, mono, fltp (default)\nStream mapping:\n  Stream #0:1 -> #0:0 (opus (native) -> pcm_s16le (native))\nPress [q] to stop, [?] for help\nOutput #0, wav, to '/var/folders/kx/lx_28s7j62g17mf6fjm3cjfr0000gn/T/recording.wav':\n  Metadata:\n    ISFT            : Lavf61.7.100\n  Stream #0:0(eng): Audio: pcm_s16le ([1][0][0][0] / 0x0001), 16000 Hz, mono, s16, 256 kb/s (default)\n      Metadata:\n        encoder         : Lavc61.19.101 pcm_s16le\n[out#0/wav @ 0x11f00b3a0] video:0KiB audio:77KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.099085%\nsize=      77KiB time=00:00:02.53 bitrate= 248.4kbits/s speed= 275x    \n"
+2025-04-09 17:11:03,433 - __main__ - INFO - Converted to WAV: /var/folders/kx/lx_28s7j62g17mf6fjm3cjfr0000gn/T/recording.wav, size: 78798 bytes
+2025-04-09 17:11:03,433 - __main__ - INFO - Processing audio file: /var/folders/kx/lx_28s7j62g17mf6fjm3cjfr0000gn/T/recording.wav, size: 78798 bytes
+2025-04-09 17:11:03,434 - __main__ - INFO - Attempting Google speech recognition
+2025-04-09 17:11:04,604 - __main__ - WARNING - Google recognition failed: recognition request failed: Bad Request
+2025-04-09 17:11:04,604 - __main__ - INFO - Attempting Sphinx speech recognition
+2025-04-09 17:11:04,605 - __main__ - WARNING - Sphinx recognition failed: missing PocketSphinx module: ensure that PocketSphinx is set up correctly.
+2025-04-09 17:11:04,605 - __main__ - INFO - Attempting Whisper API speech recognition
+2025-04-09 17:11:06,491 - __main__ - INFO - Whisper recognition successful: Testing to see if the sound works.
+2025-04-09 17:11:06,493 - __main__ - INFO - Initial transcript attempt: Testing to see if the sound works.
+2025-04-09 17:11:06,493 - __main__ - INFO - Using fallback method for audio generation
+2025-04-09 17:11:06,493 - __main__ - INFO - Modified generate_and_play_audio called with text: I apologize, but I encountered an error processing...
+2025-04-09 17:11:12,475 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:11:17,297 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:11:19,644 - __main__ - INFO - WebMirror instance created successfully
+2025-04-09 17:11:19,711 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:11:19,711 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:11:24,222 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:11:28,864 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:11:30,958 - __main__ - INFO - WebMirror instance created successfully
+2025-04-09 17:11:31,049 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:11:31,049 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:11:34,019 - __main__ - INFO - Starting web analysis for user: guest
+2025-04-09 17:11:34,019 - __main__ - INFO - Mirror object state: recording=False, user_id=guest
+2025-04-09 17:11:54,857 - __main__ - INFO - Web analysis complete: happy, ['relaxed']
+2025-04-09 17:13:21,289 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:13:25,792 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:13:28,213 - __main__ - INFO - WebMirror instance created successfully
+2025-04-09 17:13:28,295 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:13:28,295 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:13:45,476 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:13:49,888 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:13:51,968 - __main__ - INFO - WebMirror instance created successfully
+2025-04-09 17:13:52,079 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:13:52,079 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:14:01,122 - __main__ - INFO - Starting web analysis for user: guest
+2025-04-09 17:14:01,122 - __main__ - INFO - Mirror object state: recording=False, user_id=guest
+2025-04-09 17:14:31,725 - __main__ - INFO - Web analysis complete: neutral, ['relaxed']
+2025-04-09 17:15:06,429 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:15:11,489 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:15:13,832 - __main__ - INFO - WebMirror instance created successfully
+2025-04-09 17:15:13,906 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:15:13,906 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:15:16,095 - __main__ - INFO - Starting web analysis for user: guest
+2025-04-09 17:15:16,095 - __main__ - INFO - Mirror object state: recording=False, user_id=guest
+2025-04-09 17:15:20,119 - __main__ - INFO - Web analysis complete: happy, ['relaxed']
+2025-04-09 17:15:21,593 - __main__ - INFO - Starting web analysis for user: guest
+2025-04-09 17:15:21,593 - __main__ - INFO - Mirror object state: recording=False, user_id=guest
+2025-04-09 17:15:22,962 - __main__ - INFO - Web analysis complete: fear, ['relaxed']
+2025-04-09 17:15:24,834 - __main__ - INFO - Starting web analysis for user: guest
+2025-04-09 17:15:24,834 - __main__ - INFO - Mirror object state: recording=False, user_id=guest
+2025-04-09 17:15:26,180 - __main__ - INFO - Web analysis complete: neutral, ['relaxed']
+2025-04-09 17:15:27,428 - __main__ - INFO - Starting web analysis for user: guest
+2025-04-09 17:15:27,429 - __main__ - INFO - Mirror object state: recording=False, user_id=guest
+2025-04-09 17:15:28,767 - __main__ - INFO - Web analysis complete: neutral, ['relaxed']
+2025-04-09 17:15:31,755 - __main__ - INFO - Starting web analysis for user: guest
+2025-04-09 17:15:31,755 - __main__ - INFO - Mirror object state: recording=False, user_id=guest
+2025-04-09 17:15:33,135 - __main__ - INFO - Web analysis complete: neutral, ['relaxed']
+2025-04-09 17:15:38,514 - __main__ - INFO - Starting web analysis for user: guest
+2025-04-09 17:15:38,514 - __main__ - INFO - Mirror object state: recording=False, user_id=guest
+2025-04-09 17:15:39,861 - __main__ - INFO - Web analysis complete: sad, ['relaxed']
+2025-04-09 17:15:50,220 - __main__ - INFO - Starting listening for user: guest
+2025-04-09 17:15:52,627 - __main__ - INFO - Audio saved to /var/folders/kx/lx_28s7j62g17mf6fjm3cjfr0000gn/T/recording.webm, size: 357212 bytes
+2025-04-09 17:15:52,627 - __main__ - INFO - About to convert: /var/folders/kx/lx_28s7j62g17mf6fjm3cjfr0000gn/T/recording.webm to /var/folders/kx/lx_28s7j62g17mf6fjm3cjfr0000gn/T/recording.wav
+2025-04-09 17:15:52,826 - __main__ - INFO - Conversion stdout: b''
+2025-04-09 17:15:52,826 - __main__ - INFO - Conversion stderr: b"ffmpeg version 7.1.1 Copyright (c) 2000-2025 the FFmpeg developers\n  built with Apple clang version 16.0.0 (clang-1600.0.26.6)\n  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/7.1.1_1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libharfbuzz --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox --enable-neon\n  libavutil      59. 39.100 / 59. 39.100\n  libavcodec     61. 19.101 / 61. 19.101\n  libavformat    61.  7.100 / 61.  7.100\n  libavdevice    61.  3.100 / 61.  3.100\n  libavfilter    10.  4.100 / 10.  4.100\n  libswscale      8.  3.100 /  8.  3.100\n  libswresample   5.  3.100 /  5.  3.100\n  libpostproc    58.  3.100 / 58.  3.100\nInput #0, matroska,webm, from '/var/folders/kx/lx_28s7j62g17mf6fjm3cjfr0000gn/T/recording.webm':\n  Metadata:\n    encoder         : Chrome\n  Duration: N/A, start: 0.000000, bitrate: N/A\n  Stream #0:0(eng): Video: h264 (Baseline), yuv420p(tv, smpte170m/bt709/bt709, progressive), 640x480, SAR 1:1 DAR 4:3, 23.08 fps, 23.08 tbr, 1k tbn (default)\n  Stream #0:1(eng): Audio: opus, 48000 Hz, mono, fltp (default)\nStream mapping:\n  Stream #0:1 -> #0:0 (opus (native) -> pcm_s16le (native))\nPress [q] to stop, [?] for help\nOutput #0, wav, to '/var/folders/kx/lx_28s7j62g17mf6fjm3cjfr0000gn/T/recording.wav':\n  Metadata:\n    ISFT            : Lavf61.7.100\n  Stream #0:0(eng): Audio: pcm_s16le ([1][0][0][0] / 0x0001), 16000 Hz, mono, s16, 256 kb/s (default)\n      Metadata:\n        encoder         : Lavc61.19.101 pcm_s16le\n[out#0/wav @ 0x12bf04460] video:0KiB audio:56KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.135417%\nsize=      56KiB time=00:00:01.88 bitrate= 244.4kbits/s speed= 328x    \n"
+2025-04-09 17:15:52,827 - __main__ - INFO - Converted to WAV: /var/folders/kx/lx_28s7j62g17mf6fjm3cjfr0000gn/T/recording.wav, size: 57678 bytes
+2025-04-09 17:15:52,827 - __main__ - INFO - Processing audio file: /var/folders/kx/lx_28s7j62g17mf6fjm3cjfr0000gn/T/recording.wav, size: 57678 bytes
+2025-04-09 17:15:52,827 - __main__ - INFO - Attempting Google speech recognition
+2025-04-09 17:15:53,936 - __main__ - WARNING - Google recognition failed: recognition request failed: Bad Request
+2025-04-09 17:15:53,937 - __main__ - INFO - Attempting Sphinx speech recognition
+2025-04-09 17:15:53,937 - __main__ - WARNING - Sphinx recognition failed: missing PocketSphinx module: ensure that PocketSphinx is set up correctly.
+2025-04-09 17:15:53,937 - __main__ - INFO - Attempting Whisper API speech recognition
+2025-04-09 17:15:56,139 - __main__ - INFO - Whisper recognition successful: Fan out, Yeri and Demi.
+2025-04-09 17:15:56,141 - __main__ - INFO - Initial transcript attempt: Fan out, Yeri and Demi.
+2025-04-09 17:15:56,142 - __main__ - INFO - Using fallback method for audio generation
+2025-04-09 17:15:56,142 - __main__ - INFO - Modified generate_and_play_audio called with text: I apologize, but I encountered an error processing...
+2025-04-09 17:15:57,876 - __main__ - INFO - Audio saved to temp_fallback_audio.mp3
+2025-04-09 17:15:57,877 - __main__ - INFO - Generated audio through mirror, size: 68640 bytes
+2025-04-09 17:16:04,685 - __main__ - ERROR - Error analyzing guidelines: 'WebMirror' object has no attribute 'get_conversation_history'
+2025-04-09 17:17:19,256 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:17:24,245 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:17:24,246 - __main__ - INFO - WebMirror instance created successfully
+2025-04-09 17:17:24,878 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:17:24,879 - __main__ - INFO - Mirror initialized successfully
+2025-04-09 17:17:31,538 - __main__ - INFO - Firebase initialized successfully
+2025-04-09 17:17:36,227 - __main__ - INFO - Initializing WebMirror with user_id: guest
+2025-04-09 17:17:44,442 - __main__ - INFO - WebMirror instance created successfully
+2025-04-09 17:17:44,741 - __main__ - INFO - Camera initialized successfully
+2025-04-09 17:17:44,741 - __main__ - INFO - Mirror initialized successfully
