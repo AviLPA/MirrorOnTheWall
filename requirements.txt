@@ -1,0 +1,66 @@
+# Core utilities
+requests>=2.27.1
+numpy>=1.14.0
+pandas>=1.1.5
+gdown>=3.10.1
+tqdm>=4.30.0
+Pillow>=9.0.0
+opencv-python-headless>=4.5.5
+matplotlib
+scikit-learn>=1.0.2
+packaging>=21.0
+
+# Apple Silicon–specific TensorFlow
+tensorflow-macos==2.14.0
+tensorflow-metal==1.1.0
+
+# Flask web server
+Flask>=2.0.0
+flask_cors>=4.0.1
+gunicorn>=20.1.0
+
+# Audio + speech
+pyaudio
+pyttsx3
+SpeechRecognition
+pydub
+wave
+
+# Face & vision detection
+mtcnn>=0.1.0
+retina-face>=0.0.1
+mediapipe
+deepface
+
+# Firebase
+firebase-admin
+
+# CLI utilities
+fire>=0.4.0
+
+# RAG & LangChain ecosystem
+langchain>=0.0.350
+langchain-community>=0.0.10
+langchain-core>=0.1.20
+langchain-openai>=0.0.3
+chromadb>=0.4.17
+tiktoken>=0.5.1
+openai>=1.10.0
+
+# Pydantic (pinned for LangChain compatibility)
+pydantic==1.10.13
+
+# For handling unstructured files
+unstructured
+python-magic
+
+# Optional: for tf.keras compatibility
+tf-keras
+
+# Security
+pyOpenSSL>=23.0.0
+
+# High-accuracy emotion recognition (PyTorch + HSEmotion)
+torch>=2.3.0
+torchvision>=0.18.0
+hsemotion>=0.3.0

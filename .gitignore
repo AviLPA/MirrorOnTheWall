@@ -1,0 +1,46 @@
+my_env/
+my_env_310/
+venv/
+new_venv/
+__pycache__/
+*.pyc
+config.py
+serviceAccountKey.json
+
+# Firebase credentials
+mirror-8ea7e-firebase-adminsdk-gpx8d-4029383394.json
+*.json
+
+# Temporary and test files
+*.mp3
+*.wav
+temp_*
+test_*
+recording_*
+
+# Log files
+*.log
+app.log
+mirror.log
+web_mirror.log
+
+# Large local data and DB
+mental_health_db/
+*.sqlite3
+*.bin
+*.pkl
+*.pickle
+
+# IDE and workspace files
+*.code-workspace
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary directories
+untitled folder/
+ai-mirror/
+mirror-admin/

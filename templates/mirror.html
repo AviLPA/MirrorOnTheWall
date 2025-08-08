@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Mirror Web Interface</title>
+    <style>
+        :root {
+            --primary-color: #2196F3;
+            --secondary-color: #4CAF50;
+            --accent-color: #FF5722;
+            --background-dark: #1a1a1a;
+            --background-light: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
+            --transparent-blue: rgba(33, 150, 243, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--background-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: var(--background-light);
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .video-container {
+            position: relative;
+            flex: 1;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #mirror-feed {
+            width: 100%;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            display: block;
+        }
+
+        .results {
+            background: var(--background-dark);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .results h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .results p {
+            margin: 1rem 0;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .results span {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .button-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--transparent-blue);
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+        }
+
+        button {
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #analyze-btn {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        #listen-btn {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        #end-session-btn {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .login-container {
+            background: var(--background-dark);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        #user-status {
+            background: var(--background-light);
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-right: auto;
+        }
+
+        input {
+            width: 200px;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            border: 2px solid var(--background-light);
+            background: var(--background-light);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .login-container button {
+            width: auto;
+            margin: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .main-content {
+                flex-direction: column;
+            }
+
+            .results {
+                max-width: 100%;
+            }
+
+            .button-container {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .login-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            input {
+                width: 100%;
+            }
+        }
+
+        .conversation-container {
+            margin-top: 1.5rem;
+            border-top: 1px solid var(--background-light);
+            padding-top: 1rem;
+        }
+        
+        .conversation-container h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        
+        #conversation-history {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--border-radius);
+        }
+        
+        .conversation-entry {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .conversation-entry:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .user-message {
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .ai-response {
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+        
+        .current-response {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.75rem;
+            border-radius: var(--border-radius);
+        }
+
+        .memory-section {
+            background: var(--transparent-blue);
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .memory-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .memory-section p, .memory-section li {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin: 0.3rem 0;
+        }
+
+        .memory-section ul {
+            margin: 0.5rem 0;
+            padding-left: 1rem;
+        }
+
+        .proactive-questions {
+            background: rgba(76, 175, 80, 0.1);
+            border-left-color: var(--secondary-color);
+        }
+
+        .proactive-questions h3 {
+            color: var(--secondary-color);
+        }
+
+        .progress-insights {
+            background: rgba(255, 87, 34, 0.1);
+            border-left-color: var(--accent-color);
+        }
+
+        .progress-insights h3 {
+            color: var(--accent-color);
+        }
+
+        .memory-toggle {
+            background: var(--transparent-blue);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 0.5rem 1rem;
+            margin: 0.5rem 0;
+            font-size: 0.8rem;
+        }
+
+        .memory-content {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .memory-content.expanded {
+            display: block;
+        }
+
+        .feedback-section {
+            background: var(--background-dark);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+        }
+
+        .feedback-section h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .rating-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .rating-btn {
+            background: var(--background-light);
+            color: var(--text-secondary);
+            border: 1px solid var(--text-secondary);
+            padding: 0.3rem 0.8rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .rating-btn:hover, .rating-btn.selected {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Smart Mirror Web Interface</h1>
+        
+        <div class="login-container">
+            <div id="user-status">Not logged in</div>
+            <input type="text" id="user-id" placeholder="Enter User ID">
+            <button onclick="login()">Login</button>
+            <button onclick="signUp()" style="background:#6a5acd">Sign Up</button>
+            <button onclick="logout()">Logout</button>
+        </div>
+        
+        <div class="main-content">
+            <div class="video-container">
+                <video id="mirror-feed" autoplay playsinline></video>
+                <div class="button-container">
+                    <button id="analyze-btn" onclick="analyze()">Analyze</button>
+                    <button id="listen-btn" onclick="toggleSpeech()">Listen</button>
+                    <button id="end-session-btn" onclick="endSession()">End Session</button>
+                </div>
+            </div>
+            
+            <div class="results">
+                <h2>Analysis Results</h2>
+                <p>Emotion: <span id="emotion-result">Not analyzed</span></p>
+                <p>Body Language: <span id="posture-result">Not analyzed</span></p>
+                <p>Risk Level: <span id="risk-level">Not analyzed</span></p>
+                <p>Risk Indicators: <span id="risk-indicators">None</span></p>
+                <p>Last Response: <span id="response-result">Not analyzed</span></p>
+                
+                <!-- Conversation History Section (added to avoid null appendChild errors) -->
+                <div class="conversation-container">
+                    <h3>Conversation</h3>
+                    <div id="conversation-history"></div>
+                </div>
+                
+                <!-- System Memory Section -->
+                <div class="memory-section">
+                    <h3>📋 Session Summary</h3>
+                    <button class="memory-toggle" onclick="toggleMemorySection('session-memory')">
+                        View Session Context
+                    </button>
+                    <div id="session-memory" class="memory-content">
+                        <p><strong>Emotional Pattern:</strong> <span id="emotional-pattern">Loading...</span></p>
+                        <p><strong>Recent Context:</strong> <span id="recent-context">Loading...</span></p>
+                        <p><strong>Interaction Style:</strong> <span id="interaction-style">Loading...</span></p>
+                    </div>
+                </div>
+
+                <!-- Proactive Questions Section -->
+                <div class="memory-section proactive-questions">
+                    <h3>💡 Conversation Starters</h3>
+                    <button class="memory-toggle" onclick="toggleMemorySection('proactive-questions')">
+                        Show Suggestions
+                    </button>
+                    <div id="proactive-questions" class="memory-content">
+                        <ul id="proactive-questions-list">
+                            <li>Loading suggestions...</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Progress Insights Section -->
+                <div class="memory-section progress-insights">
+                    <h3>📈 Progress Insights</h3>
+                    <button class="memory-toggle" onclick="toggleMemorySection('progress-insights')">
+                        View Progress
+                    </button>
+                    <div id="progress-insights" class="memory-content">
+                        <p id="progress-text">Loading insights...</p>
+                    </div>
+                </div>
+
+                <!-- Interaction Feedback Section -->
+                <div class="feedback-section">
+                    <h3>💬 Rate This Interaction</h3>
+                    <div class="rating-buttons">
+                        <button class="rating-btn" onclick="selectRating(1)">1</button>
+                        <button class="rating-btn" onclick="selectRating(2)">2</button>
+                        <button class="rating-btn" onclick="selectRating(3)">3</button>
+                        <button class="rating-btn" onclick="selectRating(4)">4</button>
+                        <button class="rating-btn" onclick="selectRating(5)">5</button>
+                    </div>
+                    <input type="text" id="feedback-input" placeholder="Optional feedback..." style="width: 100%; margin: 0.5rem 0;">
+                    <button onclick="submitInteractionFeedback()" style="background: var(--secondary-color); width: 100%;">Submit Feedback</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Form -->
+        <div id="feedback-section">
+            <h3>Provide Feedback</h3>
+            <form id="feedback-form" onsubmit="return false;">
+                <textarea id="feedback-text" placeholder="Enter your feedback here..." rows="4" cols="50"></textarea>
+                <br>
+                <button type="button" onclick="submitFeedback()">Submit Feedback</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let isListening = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let videoStream = null;
+
+        // Initialize both video and audio when page loads
+        async function initializeMedia() {
+            try {
+                // If we already have a stream, stop all tracks
+                if (videoStream) {
+                    videoStream.getTracks().forEach(track => track.stop());
+                }
+                
+                // Request both video and audio permissions
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true,
+                    audio: {
+                        channelCount: 1,
+                        sampleRate: 16000,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    } 
+                });
+                
+                // Set up video
+                videoStream = stream;
+                const videoElement = document.getElementById('mirror-feed');
+                videoElement.srcObject = stream;
+                videoElement.play();
+                
+                // Set up audio recorder
+                try {
+                    // If mediaRecorder exists and is in recording state, stop it
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                        // Wait for it to fully stop
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                    }
+                    // Create a new media recorder with the fresh stream
+                    mediaRecorder = new MediaRecorder(stream);
+                    setupAudioHandlers();
+                } catch (recorderError) {
+                    console.error('Error setting up MediaRecorder:', recorderError);
+                    alert('Error setting up audio recording. Speech functions may not work.');
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Error accessing media devices:', error);
+                alert('Could not access camera or microphone. Please check permissions.');
+                return false;
+            }
+        }
+
+        async function setupAudioHandlers() {
+            mediaRecorder.ondataavailable = async (event) => {
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                    
+                    // Don't try to send to /audio endpoint since it doesn't exist
+                    // Just store the chunks for later use
+                    console.log('Audio chunk collected, size:', event.data.size);
+                }
+            };
+            
+            // Add these handlers for better state management
+            mediaRecorder.onstop = () => {
+                console.log('MediaRecorder stopped');
+                isListening = false;
+            };
+            
+            mediaRecorder.onerror = (event) => {
+                console.error('MediaRecorder error:', event.error);
+                isListening = false;
+            };
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', async () => {
+            await initializeMedia();
+            setupAudioFeedback();
+        });
+
+        async function analyze() {
+            document.getElementById('analyze-btn').disabled = true;
+            document.getElementById('emotion-result').textContent = 'Analyzing...';
+            document.getElementById('posture-result').textContent = 'Analyzing...';
+            
+            try {
+                // Send to server - simplified to just call the analyze endpoint without image data
+                const response = await fetch('/analyze', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                // Check for success instead of status
+                if (data.success === true) {
+                    document.getElementById('emotion-result').textContent = data.emotion || 'Unknown';
+                    document.getElementById('posture-result').textContent = 
+                        Array.isArray(data.posture) ? data.posture.join(', ') : 'No posture detected';
+                    // Update analysis results
+                    updateAnalysisResults(data);
+                } else {
+                    throw new Error(data.error || 'Analysis failed');
+                }
+            } catch (error) {
+                console.error('Analysis error:', error);
+                document.getElementById('emotion-result').textContent = 'Error';
+                document.getElementById('posture-result').textContent = 'Error';
+                alert('Analysis failed. Please try again.');
+            } finally {
+                document.getElementById('analyze-btn').disabled = false;
+            }
+        }
+
+        async function toggleSpeech() {
+            const button = document.getElementById('listen-btn');
+            
+            if (!isListening) {
+                try {
+                    // Ensure media access and recorder is properly initialized
+                    if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                        console.log('Initializing or reinitializing media');
+                        const setup = await initializeMedia();
+                        if (!setup) {
+                            throw new Error('Could not access microphone');
+                        }
+                    }
+                    
+                    // Make absolutely sure we're in a clean state
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        console.log('MediaRecorder is already recording, stopping it');
+                        mediaRecorder.stop();
+                        // Make sure it has time to stop
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                        // Create a new recorder to be safe
+                        mediaRecorder = new MediaRecorder(videoStream);
+                        setupAudioHandlers();
+                    }
+                    
+                    // Clear previous chunks
+                    audioChunks = [];
+                    
+                    console.log('Starting recording with state:', mediaRecorder ? mediaRecorder.state : 'no recorder');
+                    // Start recording with a try-catch
+                    try {
+                        mediaRecorder.start(100);  // Get data every 100ms
+                        console.log('Recording started successfully');
+                        
+                        // Update UI to show listening state
+                        document.getElementById('response-result').textContent = 'Listening... (speak now)';
+                        
+                    } catch (startError) {
+                        console.error('Error starting MediaRecorder:', startError);
+                        // Try once more with a fresh recorder
+                        mediaRecorder = new MediaRecorder(videoStream);
+                        setupAudioHandlers();
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                        mediaRecorder.start(100);
+                    }
+                    
+                    isListening = true;
+                    button.textContent = 'Stop Listening';
+                    
+                    // Notify server about listening state
+                    try {
+                        const response = await fetch('/start_listening', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({})
+                        });
+                        const data = await response.json();
+                        
+                        if (!data.success) {
+                            console.warn('Server reported issue with starting listening:', data.error);
+                        }
+                    } catch (serverError) {
+                        console.error('Error communicating with server:', serverError);
+                    }
+                    
+                } catch (error) {
+                    console.error('Fatal error starting recording:', error);
+                    document.getElementById('response-result').textContent = `Error: ${error.message}`;
+                    isListening = false;
+                    button.textContent = 'Listen';
+                }
+            } else {
+                await stopRecording();
+            }
+        }
+
+        async function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                try {
+                    // Set UI state first
+                    isListening = false;
+                    document.getElementById('listen-btn').textContent = 'Listen';
+                    document.getElementById('response-result').textContent = 'Processing...';
+                    
+                    // Stop audio level monitoring
+                    stopAudioLevelMonitoring();
+                    
+                    console.log('Stopping MediaRecorder');
+                    // Stop the media recorder
+                    mediaRecorder.stop();
+                    
+                    // Wait for the last chunks to be processed
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // Create a blob from all collected chunks
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    
+                    // Send the entire recording to server
+                    const formData = new FormData();
+                    formData.append('audio', audioBlob);
+                    
+                    const response = await fetch('/stop_listening', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Add to conversation history
+                        addToConversationHistory(data.transcript || 'No speech detected', data.response || 'No response');
+                        // Update analysis results
+                        updateAnalysisResults(data);
+                        
+                        document.getElementById('response-result').textContent = data.response || 'No response';
+                        
+                        // If audio response is available, play it
+                        if (data.audio_data) {
+                            playAudioResponse(data.audio_data, data.audio_format || 'mp3');
+                        }
+                    } else {
+                        // Fall back to text input if speech recognition fails
+                        const userText = prompt('Speech recognition failed. You can type your message instead:', '');
+                        if (userText) {
+                            // Send text input to server
+                            const textResponse = await fetch('/text_input', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ text: userText })
+                            });
+                            
+                            const textData = await textResponse.json();
+                            
+                            if (textData.success) {
+                                // Add to conversation history
+                                addToConversationHistory(textData.transcript, textData.response || 'No response');
+                                // Update analysis results
+                                updateAnalysisResults(textData);
+                                
+                                document.getElementById('response-result').textContent = textData.response || 'No response';
+                                // Play audio if provided
+                                if (textData.audio_data) {
+                                    playAudioResponse(textData.audio_data, textData.audio_format || 'mp3');
+                                }
+                            } else {
+                                throw new Error(textData.error || 'Text processing failed');
+                            }
+                        } else {
+                            document.getElementById('response-result').textContent = 'Cancelled by user';
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error('Error stopping recording:', error);
+                    document.getElementById('response-result').textContent = 
+                        `Error: ${error.message}`;
+                } finally {
+                    // Reset audio chunks
+                    audioChunks = [];
+                }
+            } else {
+                console.log('Nothing to stop: MediaRecorder not recording');
+            }
+        }
+
+        // Audio level monitoring functions
+        let audioLevelInterval = null;
+
+        function startAudioLevelMonitoring() {
+            // No-op function to prevent audio level monitoring
+        }
+
+        function stopAudioLevelMonitoring() {
+            // No-op function
+        }
+
+        // Play audio response from the server
+        function playAudioResponse(audioBase64, format = 'mp3') {
+            try {
+                // Check if we're already playing audio
+                if (window.currentAudioPlayback) {
+                    console.log('Stopping previous audio playback');
+                    window.currentAudioPlayback.pause();
+                    window.currentAudioPlayback = null;
+                }
+                
+                // Remove the data URL prefix if present
+                let audioData = audioBase64;
+                if (audioData.includes('base64,')) {
+                    audioData = audioData.split('base64,')[1];
+                }
+                
+                // Create audio element
+                const audio = new Audio();
+                
+                // Add debugging
+                console.log(`Setting up audio playback (format: ${format}, data length: ${audioData.length})`);
+                
+                // Listen for events to debug
+                audio.addEventListener('canplaythrough', () => console.log('Audio ready to play'));
+                audio.addEventListener('play', () => console.log('Audio playback started'));
+                audio.addEventListener('ended', () => {
+                    console.log('Audio playback ended');
+                    window.currentAudioPlayback = null;
+                });
+                
+                audio.src = `data:audio/${format};base64,${audioData}`;
+                
+                // Store reference to current audio playback
+                window.currentAudioPlayback = audio;
+                
+                audio.oncanplaythrough = () => {
+                    console.log('Starting audio playback...');
+                    audio.play().catch(e => {
+                        console.error('Error playing audio:', e);
+                    });
+                };
+                audio.onerror = (e) => {
+                    console.error('Audio error:', e);
+                    window.currentAudioPlayback = null;
+                };
+            } catch (e) {
+                console.error('Error setting up audio playback:', e);
+            }
+        }
+
+        async function login() {
+            const userId = document.getElementById('user-id').value.trim();
+            if (!userId) {
+                alert('Please enter a user ID');
+                return;
+            }
+
+            try {
+                console.log(`Attempting login with user ID: ${userId}`);
+                
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                
+                console.log('Login response received', response);
+                console.log('Response status:', response.status);
+                
+                // Check if response is OK
+                if (!response.ok) {
+                    console.error('Non-OK response status:', response.status);
+                    // Try to get text response to see what's coming back
+                    const textResponse = await response.text();
+                    console.error('Error response body:', textResponse);
+                    throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                }
+                
+                // Check if response is JSON by looking at content-type header
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    console.error('Response is not JSON. Content-Type:', contentType);
+                    // Get the text to see what was returned
+                    const textResponse = await response.clone().text();
+                    console.error('Non-JSON response body:', textResponse);
+                    throw new Error('Server did not return JSON. Check server logs for details.');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log('Login successful');
+                    alert('Login successful!');
+                    // Update UI to show the logged in state
+                    document.getElementById('user-status').textContent = `Logged in as: ${userId}`;
+                    // Load session summary after successful login
+                    await loadSessionSummary();
+                    // Optional: Refresh the page or components
+                    await analyze(); // Re-analyze after login to refresh data
+                } else {
+                    console.error('Login failed:', data.error);
+                    alert(`Login failed: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert(`Connection error during login: ${error.message}. Check browser console for details.`);
+            }
+        }
+
+        async function signUp() {
+            const userId = document.getElementById('user-id').value.trim();
+            if (!userId) {
+                alert('Please enter a user ID');
+                return;
+            }
+
+            try {
+                const response = await fetch('/create_user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert('Sign up successful! Logged in as ' + userId);
+                    document.getElementById('user-status').textContent = `Logged in as: ${userId}`;
+                    await analyze();
+                } else {
+                    alert('Sign up failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (e) {
+                console.error('Sign up error:', e);
+                alert('Sign up failed: ' + e.message);
+            }
+        }
+
+        function switchUser() {
+            document.getElementById('user-id').value = '';
+            document.getElementById('emotion-result').textContent = '-';
+            document.getElementById('posture-result').textContent = '-';
+            document.getElementById('response-result').textContent = '-';
+        }
+
+        // Add audio feedback control
+        function setupAudioFeedback() {
+            const videoElement = document.getElementById('mirror-feed');
+            // Mute the video element to prevent echo
+            videoElement.muted = true;
+        }
+
+        // Add end session function
+        async function endSession() {
+            console.log('endSession function called'); // Add this line for debugging
+            try {
+                const response = await fetch('/end_session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Clear the results
+                    document.getElementById('emotion-result').textContent = 'Not analyzed';
+                    document.getElementById('posture-result').textContent = 'Not analyzed';
+                    document.getElementById('risk-level').textContent = 'Not analyzed';
+                    document.getElementById('risk-indicators').textContent = 'None';
+                    document.getElementById('response-result').textContent = 'Not analyzed';
+                    
+                    // Clear conversation history
+                    const conv = document.getElementById('conversation-history');
+                    if (conv) conv.innerHTML = '';
+                    
+                    alert('Session ended successfully');
+                } else {
+                    throw new Error(data.error || 'Failed to end session');
+                }
+            } catch (error) {
+                console.error('Error ending session:', error);
+                alert(`Error ending session: ${error.message}`);
+            }
+        }
+
+        // Add logout function
+        async function logout() {
+            try {
+                const response = await fetch('/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Clear the UI
+                    document.getElementById('user-id').value = '';
+                    document.getElementById('user-status').textContent = 'Not logged in';
+                    document.getElementById('emotion-result').textContent = 'Not analyzed';
+                    document.getElementById('posture-result').textContent = 'Not analyzed';
+                    document.getElementById('risk-level').textContent = 'Not analyzed';
+                    document.getElementById('risk-indicators').textContent = 'None';
+                    document.getElementById('response-result').textContent = 'Not analyzed';
+                    
+                    // Clear conversation history
+                    const conv2 = document.getElementById('conversation-history');
+                    if (conv2) conv2.innerHTML = '';
+                    
+                    alert('Logged out successfully');
+                } else {
+                    throw new Error(data.error || 'Failed to logout');
+                }
+            } catch (error) {
+                console.error('Error logging out:', error);
+                alert(`Error logging out: ${error.message}`);
+            }
+        }
+
+        // Function to add entries to conversation history
+        function addToConversationHistory(userMessage, aiResponse) {
+            let conversationHistory = document.getElementById('conversation-history');
+            if (!conversationHistory) {
+                // Create the container defensively if missing
+                conversationHistory = document.createElement('div');
+                conversationHistory.id = 'conversation-history';
+                const parent = document.querySelector('.conversation-container') || document.querySelector('.results');
+                if (parent) parent.appendChild(conversationHistory);
+            }
+            
+            // Create new conversation entry
+            const entry = document.createElement('div');
+            entry.className = 'conversation-entry';
+            
+            // Add user message
+            const userDiv = document.createElement('div');
+            userDiv.className = 'user-message';
+            userDiv.textContent = `You: "${userMessage}"`;
+            entry.appendChild(userDiv);
+            
+            // Add AI response - with no parsing needed now
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'ai-response';
+            aiDiv.textContent = `AI: "${aiResponse}"`;
+            entry.appendChild(aiDiv);
+            
+            conversationHistory.appendChild(entry);
+            conversationHistory.scrollTop = conversationHistory.scrollHeight;
+        }
+
+        // Update analysis results with risk data
+        function updateAnalysisResults(data) {
+            // Update emotion if provided
+            if (data.emotion) {
+                document.getElementById('emotion-result').textContent = data.emotion;
+            }
+            
+            // Update posture if provided
+            if (data.posture) {
+                document.getElementById('posture-result').textContent = 
+                    Array.isArray(data.posture) ? data.posture.join(', ') : data.posture;
+            }
+            
+            // Update risk data
+            document.getElementById('risk-level').textContent = (data.risk_level !== undefined && data.risk_level !== null) ? data.risk_level : 'Not analyzed';
+            document.getElementById('risk-indicators').textContent = (data.risk_indicators && data.risk_indicators.length > 0) ? data.risk_indicators.join(', ') : 'None';
+        }
+
+        function submitFeedback() {
+            const feedback = document.getElementById('feedback-text').value;
+            
+            if (!feedback || feedback.trim() === '') {
+                alert('Please enter feedback before submitting.');
+                return;
+            }
+
+            fetch('/submit_feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ feedback: feedback })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Thank you for your feedback!');
+                document.getElementById('feedback-text').value = ''; // Clear the form
+            })
+            .catch(error => {
+                console.error('Error submitting feedback:', error);
+                alert('Failed to submit feedback. Please try again.');
+            });
+        }
+
+        // Add functions for memory section management
+        function toggleMemorySection(sectionId) {
+            const section = document.getElementById(sectionId);
+            section.classList.toggle('expanded');
+        }
+
+        let selectedRating = 0;
+        function selectRating(rating) {
+            selectedRating = rating;
+            // Update button styles
+            document.querySelectorAll('.rating-btn').forEach((btn, index) => {
+                if (index + 1 <= rating) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+        }
+
+        async function submitInteractionFeedback() {
+            if (selectedRating === 0) {
+                alert('Please select a rating first.');
+                return;
+            }
+
+            const feedbackText = document.getElementById('feedback-input').value;
+            
+            try {
+                const response = await fetch('/update_session_feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        rating: selectedRating,
+                        feedback: feedbackText,
+                        interaction_id: Date.now() // Simple ID for now
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Thank you for your feedback!');
+                    // Reset form
+                    selectedRating = 0;
+                    document.getElementById('feedback-input').value = '';
+                    document.querySelectorAll('.rating-btn').forEach(btn => btn.classList.remove('selected'));
+                } else {
+                    throw new Error(data.error || 'Failed to submit feedback');
+                }
+            } catch (error) {
+                console.error('Error submitting feedback:', error);
+                alert('Failed to submit feedback. Please try again.');
+            }
+        }
+
+        async function loadSessionSummary() {
+            try {
+                const response = await fetch('/get_session_summary');
+                const data = await response.json();
+                
+                if (data.session_summary) {
+                    updateSessionMemoryDisplay(data);
+                }
+            } catch (error) {
+                console.error('Error loading session summary:', error);
+            }
+        }
+
+        function updateSessionMemoryDisplay(data) {
+            const summary = data.session_summary;
+            
+            // Update session summary
+            if (summary.user_profile) {
+                document.getElementById('emotional-pattern').textContent = 
+                    summary.user_profile.emotional_patterns || 'Monitoring patterns';
+                document.getElementById('interaction-style').textContent = 
+                    summary.system_notes?.interaction_style || 'Supportive';
+            }
+            
+            if (summary.recent_context) {
+                document.getElementById('recent-context').textContent = 
+                    summary.recent_context.last_session_summary || 'No recent context';
+            }
+            
+            // Update proactive questions
+            const questionsList = document.getElementById('proactive-questions-list');
+            if (data.proactive_questions && data.proactive_questions.length > 0) {
+                questionsList.innerHTML = '';
+                data.proactive_questions.forEach(question => {
+                    const li = document.createElement('li');
+                    li.textContent = question;
+                    questionsList.appendChild(li);
+                });
+            } else {
+                questionsList.innerHTML = '<li>No specific suggestions for this session</li>';
+            }
+            
+            // Update progress insights
+            document.getElementById('progress-text').textContent = 
+                data.progress_insights || 'Continue focusing on your wellbeing';
+        }
+
+        // Load session summary on page load if user is already logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            setupAudioFeedback();
+            // Try to load session summary if user is logged in
+            const userStatus = document.getElementById('user-status').textContent;
+            if (userStatus && !userStatus.includes('Not logged in')) {
+                loadSessionSummary();
+            }
+        });
+    </script>
+</body>
+</html> 
