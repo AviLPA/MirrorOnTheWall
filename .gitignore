@@ -4,6 +4,7 @@ ai-mirror/
 venv/
 __pycache__/
 *.pyc
+
 mental_health_db/
 *.sqlite3
 *.bin
@@ -16,9 +17,11 @@ mental_health_db/
 temp_*
 test_*
 recording_*
+
 .env
 mirror-*-firebase-adminsdk-*.json
 config.py
+
 *.code-workspace
 .vscode/
 .idea/
