@@ -1,0 +1,65 @@
+# Core utilities
+requests>=2.31.0
+numpy==1.26.4
+pandas>=1.1.5
+gdown>=3.10.1
+tqdm>=4.30.0
+Pillow>=9.0.0
+opencv-python-headless==4.8.1.78
+matplotlib
+scikit-learn>=1.2.2
+packaging>=21.0
+
+# Flask web server
+Flask==2.3.3
+flask_cors>=4.0.1
+gunicorn>=21.2.0
+
+# Audio + speech
+SpeechRecognition==3.10.0
+pydub
+python-dotenv>=1.0.0
+
+# Face & vision detection
+mtcnn>=0.1.0
+retina-face>=0.0.1
+mediapipe==0.10.14
+deepface==0.0.93
+
+# Firebase
+firebase-admin
+
+# CLI utilities
+fire>=0.4.0
+
+# RAG & LangChain ecosystem (pinned for OpenAI SDK v1.12 compatibility)
+langchain==0.0.350
+langchain-community==0.0.10
+langchain-core==0.1.20
+langchain-openai==0.0.3
+chromadb==0.4.17
+tiktoken>=0.5.1
+openai==1.12.0
+
+# Networking (pin httpx to avoid Client(proxies=...) signature mismatch on newer versions)
+httpx==0.27.2
+
+# Pydantic (pinned for LangChain compatibility)
+pydantic==1.10.13
+
+# For handling unstructured files
+# Optional file handling (commented out to avoid heavy installs)
+# unstructured
+# python-magic
+
+# Optional: Apple Silicon TensorFlow (for DeepFace TF backends)
+tensorflow-macos==2.14.0 ; platform_system == "Darwin"
+tensorflow-metal==1.1.0 ; platform_system == "Darwin"
+
+# Security
+pyOpenSSL>=23.0.0
+
+# High-accuracy emotion recognition (PyTorch + HSEmotion)
+torch>=2.3.0
+torchvision>=0.18.0
+hsemotion>=0.3.0
