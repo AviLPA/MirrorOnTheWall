@@ -10,9 +10,6 @@ matplotlib
 scikit-learn>=1.2.2
 packaging>=21.0
 
-# Apple Silicon–specific TensorFlow
-tensorflow-metal==1.1.0
-
 # Flask web server
 Flask==2.3.3
 flask_cors>=4.0.1
