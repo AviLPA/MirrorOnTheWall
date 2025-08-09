@@ -6,6 +6,29 @@ import time
 import base64
 from dotenv import load_dotenv
 from openai import OpenAI
+
+# Temporary compatibility shim for httpx>=0.28 where Client/AsyncClient removed 'proxies' kwarg
+# Some OpenAI SDK versions still pass 'proxies', which crashes on Render if httpx is new.
+try:
+    import httpx  # type: ignore
+
+    _orig_httpx_client_init = httpx.Client.__init__
+    def _shim_httpx_client_init(self, *args, **kwargs):  # noqa: D401
+        # Drop unsupported kwargs to avoid TypeError on newer httpx
+        kwargs.pop('proxies', None)
+        return _orig_httpx_client_init(self, *args, **kwargs)
+
+    httpx.Client.__init__ = _shim_httpx_client_init  # type: ignore
+
+    if hasattr(httpx, 'AsyncClient'):
+        _orig_httpx_asyncclient_init = httpx.AsyncClient.__init__  # type: ignore
+        def _shim_httpx_asyncclient_init(self, *args, **kwargs):  # noqa: D401
+            kwargs.pop('proxies', None)
+            return _orig_httpx_asyncclient_init(self, *args, **kwargs)
+        httpx.AsyncClient.__init__ = _shim_httpx_asyncclient_init  # type: ignore
+except Exception:
+    # If anything goes wrong, proceed without shim
+    pass
 import speech_recognition as sr
 import numpy as np
 import tempfile
