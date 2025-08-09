@@ -12,7 +12,6 @@ import tempfile
 from datetime import datetime
 from prompts import MentalHealthPrompts
 from firebase_admin import firestore
-from feedback_processor import analyze_feedback, adjust_prompts
 
 # Load environment variables first
 load_dotenv()
