@@ -10,6 +10,7 @@ try:
 except Exception:
     pyttsx3 = None  # type: ignore
     _PYTTSX3_AVAILABLE = False
+import os
 _USE_DEEPFACE = os.environ.get("USE_DEEPFACE", "0") == "1"
 try:
     if _USE_DEEPFACE:
