@@ -42,6 +42,9 @@ load_dotenv()
 # Initialize variables for OpenAI client
 client = None
 
+# Debug: show if OPENAI_API_KEY is visible in environment (without printing it)
+print(f"Env OPENAI_API_KEY present: {bool(os.environ.get('OPENAI_API_KEY'))}")
+
 # Try to import config - add error handling
 try:
     from config import OPENAI_API_KEY
@@ -49,7 +52,7 @@ try:
     client = OpenAI(api_key=OPENAI_API_KEY)
     # Ensure env var is set so downstream libs (e.g., LangChain) use the same key
     os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
-    print(f"OpenAI client initialized with API key from config.py")
+    print("OpenAI client initialized with API key from config.py")
 except ImportError:
     print("""
     Error: config.py not found or OPENAI_API_KEY not defined!
@@ -57,14 +60,14 @@ except ImportError:
     2. Make sure it contains: OPENAI_API_KEY = "your-api-key-here"
     """)
     # Try to get from environment variable as fallback
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("openai_api_key") or os.environ.get("OpenAI_API_KEY")
     if api_key:
         print("Using OPENAI_API_KEY from environment variables instead")
         client = OpenAI(api_key=api_key)
         # Normalize env var for all libraries
         os.environ["OPENAI_API_KEY"] = api_key
     else:
-        print("WARNING: No OpenAI API key found! Speech recognition may not work.")
+        print("WARNING: No OPENAI_API_KEY found in environment. Set it in Render service env vars.")
 
 # Move the configure_logging function definition to the top
 def configure_logging():
