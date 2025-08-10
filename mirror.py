@@ -10,7 +10,14 @@ try:
 except Exception:
     pyttsx3 = None  # type: ignore
     _PYTTSX3_AVAILABLE = False
-from deepface import DeepFace
+_USE_DEEPFACE = os.environ.get("USE_DEEPFACE", "0") == "1"
+try:
+    if _USE_DEEPFACE:
+        from deepface import DeepFace
+    else:
+        DeepFace = None  # type: ignore
+except Exception:
+    DeepFace = None  # type: ignore
 from firebase_config import FirebaseManager
 # Optional PyAudio for local microphone capture (not required in web mode)
 try:
@@ -2898,20 +2905,23 @@ Response length: 2-4 sentences maximum.
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
                 try:
-                    analysis = DeepFace.analyze(
-                        img_path=rgb_frame,
-                        actions=['emotion'],
-                        enforce_detection=False,
-                        detector_backend='opencv'
-                    )
+                    if DeepFace is not None:
+                        analysis = DeepFace.analyze(
+                            img_path=rgb_frame,
+                            actions=['emotion'],
+                            enforce_detection=False,
+                            detector_backend='opencv'
+                        )
 
-                    if isinstance(analysis, list):
-                        analysis = analysis[0]
+                        if isinstance(analysis, list):
+                            analysis = analysis[0]
 
-                    # Add emotion probabilities
-                    for emotion, score in analysis['emotion'].items():
-                        emotion_counts[emotion] += score
-
+                        # Add emotion probabilities
+                        for emotion, score in analysis['emotion'].items():
+                            emotion_counts[emotion] += score
+                    else:
+                        # If DeepFace disabled, assume neutral
+                        emotion_counts['neutral'] += 100
                 except Exception as e:
                     print(f"Frame analysis error: {e}")
                     continue

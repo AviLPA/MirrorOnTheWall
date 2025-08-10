@@ -26,7 +26,8 @@ pyaudio==0.2.14 ; platform_system == "Darwin"  # local dev mic support (macOS on
 mtcnn>=0.1.0
 retina-face>=0.0.1
 mediapipe==0.10.14
-deepface==0.0.93
+# DeepFace depends on TensorFlow; keep it optional/off by default on Linux servers
+deepface==0.0.93 ; platform_system == "Darwin"
 
 # Firebase
 firebase-admin
