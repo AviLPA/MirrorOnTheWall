@@ -19,6 +19,8 @@ gunicorn>=21.2.0
 SpeechRecognition==3.10.0
 pydub
 python-dotenv>=1.0.0
+pyttsx3==2.90 ; platform_system != "Linux"  # optional fallback TTS; skip on typical server Linux
+pyaudio==0.2.14 ; platform_system == "Darwin"  # local dev mic support (macOS only)
 
 # Face & vision detection
 mtcnn>=0.1.0

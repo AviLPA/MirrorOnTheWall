@@ -3,12 +3,23 @@ import numpy as np
 import time
 from openai import OpenAI
 from datetime import datetime
-import pyttsx3
+# Optional TTS engine (fallback)
+try:
+    import pyttsx3  # type: ignore
+    _PYTTSX3_AVAILABLE = True
+except Exception:
+    pyttsx3 = None  # type: ignore
+    _PYTTSX3_AVAILABLE = False
 from deepface import DeepFace
 from firebase_config import FirebaseManager
-import pyaudio
+# Optional PyAudio for local microphone capture (not required in web mode)
+try:
+    import pyaudio  # type: ignore
+    _PYAUDIO_AVAILABLE = True
+except Exception:
+    pyaudio = None  # type: ignore
+    _PYAUDIO_AVAILABLE = False
 import wave
-from config import OPENAI_API_KEY, OPENAI_TTS_VOICE, OPENAI_TTS_MODEL
 import os
 import threading
 from queue import Queue
@@ -37,10 +48,30 @@ import json
 from prompts import MentalHealthPrompts
 import ast
 
-# Initialize OpenAI client once globally and normalize env var
-os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
-client = OpenAI(api_key=OPENAI_API_KEY)
-client.timeout = 15  # 15 seconds timeout
+# Resolve OpenAI configuration with safe fallbacks
+# Try config.py first, otherwise use environment variables
+OPENAI_API_KEY = None
+OPENAI_TTS_VOICE = None
+OPENAI_TTS_MODEL = None
+try:
+    from config import OPENAI_API_KEY as _CONF_KEY, OPENAI_TTS_VOICE as _CONF_VOICE, OPENAI_TTS_MODEL as _CONF_MODEL  # type: ignore
+    OPENAI_API_KEY = _CONF_KEY
+    OPENAI_TTS_VOICE = _CONF_VOICE
+    OPENAI_TTS_MODEL = _CONF_MODEL
+except Exception:
+    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY") or os.environ.get("openai_api_key") or os.environ.get("OpenAI_API_KEY")
+    OPENAI_TTS_VOICE = os.environ.get("OPENAI_TTS_VOICE", "sage")
+    OPENAI_TTS_MODEL = os.environ.get("OPENAI_TTS_MODEL", "tts-1")
+
+# Initialize OpenAI client once globally and normalize env var if key is available
+if OPENAI_API_KEY:
+    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+    client = OpenAI(api_key=OPENAI_API_KEY)
+    client.timeout = 15  # 15 seconds timeout
+else:
+    # Create a client that will likely fail on network calls, but avoid crashing import
+    client = OpenAI()
+    client.timeout = 15
 
 # Check OpenAI library version
 openai_version = pkg_resources.get_distribution("openai").version
@@ -50,16 +81,7 @@ USING_OPENAI_V1 = int(openai_version.split('.')[0]) >= 1
 # Set global timeout for all HTTP requests to prevent freezing
 requests.adapters.DEFAULT_TIMEOUT = 15  # 15 seconds timeout
 
-try:
-    from config import OPENAI_API_KEY
-except ImportError:
-    print("""
-    Error: config.py not found!
-    1. Create a file named config.py
-    2. Add your OpenAI API key like this:
-       OPENAI_API_KEY = "your-api-key-here"
-    """)
-    exit(1)
+# Do not hard-exit when config.py is missing; we already handled env fallbacks above
 
 class SmartMirror:
     def __init__(self, web_mode=None):
@@ -75,46 +97,37 @@ class SmartMirror:
 
         # Initialize OpenAI first
 
-        # Initialize OpenAI TTS
+        # Initialize OpenAI TTS (skip heavy startup test unless explicitly enabled)
+        self.use_openai_tts = False
         try:
-            print(f"Testing OpenAI TTS with voice: {OPENAI_TTS_VOICE}, model: {OPENAI_TTS_MODEL}")
-
-            # Test TTS with a small message
-            test_response_content = client.audio.speech.create(
-                model=OPENAI_TTS_MODEL,
-                voice=OPENAI_TTS_VOICE,
-                input="Hello, I'm testing OpenAI text to speech."
-            ).content
-
-            # Save test response to file to verify it works
-            test_file = "test_audio.mp3"
-            with open(test_file, "wb") as f:
-                f.write(test_response_content)
-
-            file_size = os.path.getsize(test_file)
-            print(f"Test audio file created, size: {file_size} bytes")
-
-            if file_size > 0:
-                self.use_openai_tts = True
-                print(f"OpenAI TTS configured successfully with voice: {OPENAI_TTS_VOICE}")
-
-                # Play the test audio
-                if sys.platform == "darwin":  # macOS
-                    os.system(f"afplay {test_file}")
-                elif sys.platform == "win32":  # Windows
-                    os.system(f"start {test_file}")
-                else:  # Linux or other
-                    os.system(f"mpg123 {test_file}")
-            else:
-                raise Exception("Test audio file has zero size")
-
+            if OPENAI_API_KEY:
+                if os.environ.get("ENABLE_TTS_STARTUP_TEST", "0") == "1":
+                    print(f"Testing OpenAI TTS with voice: {OPENAI_TTS_VOICE}, model: {OPENAI_TTS_MODEL}")
+                    test_response_content = client.audio.speech.create(
+                        model=OPENAI_TTS_MODEL,
+                        voice=OPENAI_TTS_VOICE,
+                        input="Hello, I'm testing OpenAI text to speech."
+                    ).content
+                    test_file = "test_audio.mp3"
+                    with open(test_file, "wb") as f:
+                        f.write(test_response_content)
+                    if os.path.getsize(test_file) > 0:
+                        self.use_openai_tts = True
+                        print(f"OpenAI TTS configured successfully with voice: {OPENAI_TTS_VOICE}")
+                else:
+                    # Assume available; actual calls handle errors gracefully
+                    self.use_openai_tts = True
         except Exception as e:
             self.use_openai_tts = False
             print(f"OpenAI TTS not configured, using fallback TTS: {e}")
-            traceback.print_exc()  # Print full traceback
 
-        # Initialize text-to-speech engine (fallback)
-        self.engine = pyttsx3.init()
+        # Initialize text-to-speech engine (fallback) if available
+        self.engine = None
+        if _PYTTSX3_AVAILABLE:
+            try:
+                self.engine = pyttsx3.init()
+            except Exception:
+                self.engine = None
 
         # Initialize Firebase
         try:
@@ -843,10 +856,17 @@ class SmartMirror:
     def _speak_with_fallback(self, message):
         """Use pyttsx3 as fallback TTS"""
         try:
-            # Configure voice
-            voices = self.engine.getProperty('voices')
-            self.engine.setProperty('voice', voices[1].id)  # Use female voice
-            self.engine.setProperty('rate', 175)  # Speed
+            if self.engine is None:
+                print("Fallback TTS unavailable (pyttsx3 not installed)")
+                return
+            # Configure voice safely
+            try:
+                voices = self.engine.getProperty('voices')
+                if voices and len(voices) > 1:
+                    self.engine.setProperty('voice', voices[1].id)
+                self.engine.setProperty('rate', 175)
+            except Exception:
+                pass
 
             # Speak message
             self.engine.say(message)
@@ -880,6 +900,9 @@ class SmartMirror:
 
         # Fallback to pyttsx3
         try:
+            if self.engine is None:
+                print("Fallback TTS unavailable (pyttsx3 not installed)")
+                return
             self.engine.say(message)
             self.engine.runAndWait()
         except Exception as e:

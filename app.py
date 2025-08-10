@@ -829,135 +829,164 @@ def stop_listening():
                 "response": "I didn't hear anything. Could you try speaking louder?"
             })
         
-        # Convert webm to wav
+        # Try direct transcription of WebM first (avoids ffmpeg dependency)
+        transcript = None
+        wav_path = None
         try:
-            import subprocess
-            wav_path = os.path.join(temp_dir, 'recording.wav')
-            
-            # Debug: List the file to make sure it exists
-            if not os.path.exists(webm_path):
-                logger.error(f"WebM file doesn't exist at: {webm_path}")
-                return jsonify({"success": False, "error": "WebM file not saved correctly"})
-                
-            logger.info(f"About to convert: {webm_path} to {wav_path}")
-            
-            # Use ffmpeg to convert webm to wav
-            result = subprocess.run(
-                ['ffmpeg', '-y', '-i', webm_path, '-ar', '16000', '-ac', '1', wav_path],
-                check=True, capture_output=True
-            )
-            
-            logger.info(f"Conversion stdout: {result.stdout}")
-            logger.info(f"Conversion stderr: {result.stderr}")
-            
-            if not os.path.exists(wav_path):
-                logger.error("WAV file wasn't created by ffmpeg")
-                return jsonify({"success": False, "error": "Failed to convert audio format"})
-                
-            logger.info(f"Converted to WAV: {wav_path}, size: {os.path.getsize(wav_path)} bytes")
-            
-            # Use our standalone speech recognition function
-            transcript = recognize_speech_from_file(wav_path)
-            logger.info(f"Initial transcript attempt: {transcript}")
-            
-            if not transcript:
-                # If our function couldn't recognize speech, try the mirror methods
-                logger.info("Initial transcript failed, trying mirror methods")
-                if hasattr(mirror, 'process_audio_file'):
-                    transcript = mirror.process_audio_file(wav_path)
-                    logger.info(f"Transcript from mirror.process_audio_file: {transcript}")
-                elif hasattr(mirror, 'whisper_process'):
-                    transcript = mirror.whisper_process(wav_path)
-                    logger.info(f"Transcript from mirror.whisper_process: {transcript}")
-                elif hasattr(mirror, 'whisper_transcribe'):
-                    # Try direct whisper transcription as a last resort
-                    try:
-                        with open(wav_path, "rb") as audio_file:
-                            transcription = client.audio.transcribe("whisper-1", audio_file)
-                            transcript = transcription.text
-                            logger.info(f"Direct Whisper transcript: {transcript}")
-                    except Exception as e:
-                        logger.error(f"Direct Whisper transcription failed: {e}")
-            
-            # If we still don't have a transcript, use fallback
-            if not transcript:
-                logger.warning("All speech recognition methods failed")
-                return jsonify({
-                    "success": False,
-                    "error": "Could not understand speech",
-                    "transcript": "",
-                    "response": "I couldn't understand what you said. Could you try speaking more clearly?"
-                })
-            
-            # Generate response using the transcript
-            if hasattr(mirror, 'web_generate_response'):
-                response_text = mirror.web_generate_response(transcript)
-            elif hasattr(mirror, 'generate_response'):
-                emotion = getattr(mirror, 'locked_emotion', 'neutral')
-                posture = getattr(mirror, 'locked_body_language', [])
-                response_text = mirror.generate_response(transcript, emotion, posture)
-            else:
-                response_text = f"I heard you say: '{transcript}', but I'm not sure how to respond right now."
-            
-            # Extract risk data for UI display
-            risk_level = getattr(mirror, 'last_risk_level', 0)
-            risk_indicators = getattr(mirror, 'last_risk_indicators', [])
-            is_emergency = getattr(mirror, 'last_is_emergency', False)
-            
-            # Generate audio for the response
-            audio_data = None
-            audio_format = "mp3"
-            
+            with open(webm_path, "rb") as audio_file:
+                logger.info("Attempting direct Whisper transcription of WebM")
+                transcription = client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file
+                )
+                transcript = getattr(transcription, 'text', None) or getattr(transcription, 'data', None)
+                logger.info(f"Direct WebM transcription result: {bool(transcript)}")
+        except Exception as direct_err:
+            logger.warning(f"Direct WebM transcription failed: {direct_err}")
+
+        if not transcript:
+            # Convert webm to wav (fallback when ffmpeg is available)
             try:
-                # Generate audio with OpenAI's TTS API
-                audio_response = client.audio.speech.create(
-                    model="tts-1",
-                    voice="sage", 
-                    input=response_text
+                import subprocess
+                wav_path = os.path.join(temp_dir, 'recording.wav')
+                
+                # Debug: List the file to make sure it exists
+                if not os.path.exists(webm_path):
+                    logger.error(f"WebM file doesn't exist at: {webm_path}")
+                    return jsonify({"success": False, "error": "WebM file not saved correctly"})
+                    
+                logger.info(f"About to convert: {webm_path} to {wav_path}")
+                
+                # Use ffmpeg to convert webm to wav
+                result = subprocess.run(
+                    ['ffmpeg', '-y', '-i', webm_path, '-ar', '16000', '-ac', '1', wav_path],
+                    check=True, capture_output=True
                 )
                 
-                # Save to temporary file
-                temp_audio_path = "temp_fallback_audio.mp3"
-                audio_response.stream_to_file(temp_audio_path)
+                logger.info(f"Conversion stdout: {result.stdout}")
+                logger.info(f"Conversion stderr: {result.stderr}")
                 
-                # Read the data as base64 for sending to client
-                with open(temp_audio_path, "rb") as audio_file:
-                    audio_data = base64.b64encode(audio_file.read()).decode('utf-8')
+                if not os.path.exists(wav_path):
+                    logger.error("WAV file wasn't created by ffmpeg")
+                    return jsonify({"success": False, "error": "Failed to convert audio format"})
+                    
+                logger.info(f"Converted to WAV: {wav_path}, size: {os.path.getsize(wav_path)} bytes")
                 
-                logger.info(f"Generated audio response, size: {os.path.getsize(temp_audio_path)} bytes")
+                # Use our standalone speech recognition function
+                transcript = recognize_speech_from_file(wav_path)
+                logger.info(f"Initial transcript attempt: {transcript}")
+                
+                if not transcript:
+                    # If our function couldn't recognize speech, try the mirror methods
+                    logger.info("Initial transcript failed, trying mirror methods")
+                    if hasattr(mirror, 'process_audio_file'):
+                        transcript = mirror.process_audio_file(wav_path)
+                        logger.info(f"Transcript from mirror.process_audio_file: {transcript}")
+                    elif hasattr(mirror, 'whisper_process'):
+                        transcript = mirror.whisper_process(wav_path)
+                        logger.info(f"Transcript from mirror.whisper_process: {transcript}")
+                    elif hasattr(mirror, 'whisper_transcribe'):
+                        # Try direct whisper transcription as a last resort
+                        try:
+                            with open(wav_path, "rb") as audio_file:
+                                transcription = client.audio.transcriptions.create(
+                                    model="whisper-1",
+                                    file=audio_file
+                                )
+                                transcript = transcription.text
+                                logger.info(f"Direct Whisper transcript: {transcript}")
+                        except Exception as e:
+                            logger.error(f"Direct Whisper transcription failed: {e}")
+            except subprocess.CalledProcessError as e:
+                logger.error(f"FFmpeg error: {e}")
+                logger.error(f"FFmpeg stderr: {e.stderr.decode() if hasattr(e, 'stderr') else 'No error output'}")
+                # If ffmpeg is unavailable, try one more time to send webm to Whisper
+                try:
+                    with open(webm_path, "rb") as audio_file:
+                        transcription = client.audio.transcriptions.create(
+                            model="whisper-1",
+                            file=audio_file
+                        )
+                        transcript = getattr(transcription, 'text', None)
+                        logger.info(f"Fallback direct WebM transcript: {transcript}")
+                except Exception as final_err:
+                    logger.error(f"Final direct WebM transcription failed: {final_err}")
+                    return jsonify({"success": False, "error": "Failed to convert/transcribe audio"})
             
-            except Exception as audio_error:
-                logger.error(f"Error generating audio response: {audio_error}")
-                # Continue without audio
+        # If we still don't have a transcript, use fallback
+        if not transcript:
+            logger.warning("All speech recognition methods failed")
+            return jsonify({
+                "success": False,
+                "error": "Could not understand speech",
+                "transcript": "",
+                "response": "I couldn't understand what you said. Could you try speaking more clearly?"
+            })
+        
+        # Generate response using the transcript (works for both direct and converted paths)
+        if hasattr(mirror, 'web_generate_response'):
+            response_text = mirror.web_generate_response(transcript)
+        elif hasattr(mirror, 'generate_response'):
+            emotion = getattr(mirror, 'locked_emotion', 'neutral')
+            posture = getattr(mirror, 'locked_body_language', [])
+            response_text = mirror.generate_response(transcript, emotion, posture)
+        else:
+            response_text = f"I heard you say: '{transcript}', but I'm not sure how to respond right now."
+        
+        # Extract risk data for UI display
+        risk_level = getattr(mirror, 'last_risk_level', 0)
+        risk_indicators = getattr(mirror, 'last_risk_indicators', [])
+        is_emergency = getattr(mirror, 'last_is_emergency', False)
+        
+        # Generate audio for the response
+        audio_data = None
+        audio_format = "mp3"
+        
+        try:
+            # Generate audio with OpenAI's TTS API
+            audio_response = client.audio.speech.create(
+                model="tts-1",
+                voice="sage", 
+                input=response_text
+            )
             
-            # Clean up temporary files
-            try:
-                for path in [webm_path, wav_path]:
-                    if os.path.exists(path):
-                        os.remove(path)
-            except Exception as e:
-                logger.error(f"Error removing temporary files: {e}")
+            # Save to temporary file
+            temp_audio_path = "temp_fallback_audio.mp3"
+            audio_response.stream_to_file(temp_audio_path)
             
-            # Return success with transcript, response, and audio data
-            result = {
-                "success": True,
-                "transcript": transcript,
-                "response": response_text,
-                "risk_level": risk_level,
-                "risk_indicators": risk_indicators,
-                "is_emergency": is_emergency
-            }
+            # Read the data as base64 for sending to client
+            with open(temp_audio_path, "rb") as audio_file:
+                audio_data = base64.b64encode(audio_file.read()).decode('utf-8')
             
-            if audio_data:
-                result["audio_data"] = audio_data
-                result["audio_format"] = audio_format
-            
-            return jsonify(result)
-            
-        except subprocess.CalledProcessError as e:
-            logger.error(f"FFmpeg error: {e}")
-            logger.error(f"FFmpeg stderr: {e.stderr.decode() if hasattr(e, 'stderr') else 'No error output'}")
-            return jsonify({"success": False, "error": "Failed to convert audio format"})
+            logger.info(f"Generated audio response, size: {os.path.getsize(temp_audio_path)} bytes")
+        
+        except Exception as audio_error:
+            logger.error(f"Error generating audio response: {audio_error}")
+            # Continue without audio
+        
+        # Clean up temporary files
+        try:
+            for path in [webm_path, wav_path]:
+                if path and os.path.exists(path):
+                    os.remove(path)
+        except Exception as e:
+            logger.error(f"Error removing temporary files: {e}")
+        
+        # Return success with transcript, response, and audio data
+        result = {
+            "success": True,
+            "transcript": transcript,
+            "response": response_text,
+            "risk_level": risk_level,
+            "risk_indicators": risk_indicators,
+            "is_emergency": is_emergency
+        }
+        
+        if audio_data:
+            result["audio_data"] = audio_data
+            result["audio_format"] = audio_format
+        
+        return jsonify(result)
             
     except Exception as e:
         logger.error(f"Error processing audio: {e}")
