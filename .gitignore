@@ -1,50 +1,29 @@
-# API Keys and Configuration
-config.py
-config.template.py
-serviceAccountKey.json
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual Environment
+my_env/
+my_env_310/
+ai-mirror/
 venv/
-ENV/
-.env
+__pycache__/
+*.pyc
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-.DS_Store
-
-# Logs and databases
+mental_health_db/
+*.sqlite3
+*.bin
+*.pkl
+*.pickle
+*.mp3
+*.wav
+*.webm
 *.log
-*.sqlite
-*.db
+temp_*
+test_*
+recording_*
 
-# Audio recordings
-recording_*.wav
+.env
+mirror-*-firebase-adminsdk-*.json
+config.py
 
-# Temporary files
-*.tmp
+*.code-workspace
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
