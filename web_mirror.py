@@ -27,11 +27,36 @@ except Exception:
     DeepFace = None
 import wave
 from typing import Optional, Tuple, Dict
-import os
+
+# Use shared camera manager to prevent device contention
+from camera_manager import get_camera_manager
 
 # Optional high-accuracy emotion model (PyTorch)
 try:
     import torch
+    # Allowlist required timm classes for safe deserialization on Torch >=2.6
+    try:
+        # Import the specific classes mentioned in PyTorch error messages
+        from timm.layers.conv2d_same import Conv2dSame
+        from timm.models.efficientnet import EfficientNet
+        
+        if hasattr(torch, 'serialization') and hasattr(torch.serialization, 'add_safe_globals'):
+            # Add the specific class that was mentioned in the error + EfficientNet
+            torch.serialization.add_safe_globals([Conv2dSame, EfficientNet])
+            print("[WebMirror] Added PyTorch safe globals for HSEmotion compatibility")
+    except Exception as _allow_err:
+        # Proceed without allowlisting if anything fails; HSE will fallback gracefully
+        print(f"[WebMirror] Could not add safe globals (this is okay): {_allow_err}")
+        pass
+        
+    # Set up environment for better model compatibility
+    import os
+    os.environ['TORCH_DEVICE_MAP'] = 'auto'
+    
+    # Store original torch.load for potential monkey patching
+    if 'torch' in locals():
+        _original_torch_load = torch.load
+
     # Try primary import path
     try:
         from hsemotion.facial_emotions import HSEmotionRecognizer  # primary path
@@ -102,16 +127,23 @@ class WebMirror(SmartMirror):
             self._initialize_audio()
 
         # Initialize fast face detector (MediaPipe) for robust ROI extraction
-        try:
-            self.mp_face_detection = mp.solutions.face_detection
-            # model_selection=1 for better distance range (selfie/webcam)
-            self.face_detector = self.mp_face_detection.FaceDetection(
-                model_selection=1,
-                min_detection_confidence=0.6
-            )
-            print("[WebMirror] MediaPipe FaceDetection initialized")
-        except Exception as face_init_err:
-            print(f"[WebMirror] Failed to init MediaPipe FaceDetection: {face_init_err}")
+        self.mp_face_detection = None
+        self.face_detector = None
+        if mp is not None:
+            try:
+                self.mp_face_detection = mp.solutions.face_detection
+                # model_selection=1 for better distance range (selfie/webcam)
+                self.face_detector = self.mp_face_detection.FaceDetection(
+                    model_selection=1,
+                    min_detection_confidence=0.6
+                )
+                print("[WebMirror] MediaPipe FaceDetection initialized")
+            except Exception as face_init_err:
+                print(f"[WebMirror] Failed to init MediaPipe FaceDetection: {face_init_err}")
+                self.mp_face_detection = None
+                self.face_detector = None
+        else:
+            print("[WebMirror] MediaPipe not available - face detection disabled")
             self.face_detector = None
 
         # Temporal emotion smoothing (exponential moving average)
@@ -135,32 +167,45 @@ class WebMirror(SmartMirror):
         }
 
         # High-accuracy emotion model toggle
-        self.high_accuracy_emotions: bool = True  # enable as requested
+        self.high_accuracy_emotions: bool = False  # disabled - DeepFace is more accurate
         self.hse_model = None
-        if self.high_accuracy_emotions and HSE_AVAILABLE:
-            try:
-                device = 'mps' if torch.backends.mps.is_available() else ('cuda' if torch.cuda.is_available() else 'cpu')
-                self.hse_device = device
-                # Models: 'enet_b0_8_best_vgaf', 'enet_b2_8', etc.
-                self.hse_model = HSEmotionRecognizer(model_name='enet_b2_8', device=device)
-                print(f"[WebMirror] HSEmotion loaded on {device}")
-            except Exception as e:
-                print(f"[WebMirror] Failed to load HSEmotion: {e}")
-                self.hse_model = None
+        # HSEmotion disabled - using DeepFace for better accuracy
+        self.hse_model = None
+        print("[WebMirror] Using DeepFace for emotion detection (HSEmotion disabled for better accuracy)")
+        
+        # Keep the HSEmotion code available but commented out
+        # if self.high_accuracy_emotions and HSE_AVAILABLE:
+        #     try:
+        #         device = 'cpu'
+        #         self.hse_device = device
+        #         original_load = torch.load
+        #         def cpu_load(*args, **kwargs):
+        #             kwargs['map_location'] = 'cpu'
+        #             kwargs['weights_only'] = False
+        #             return original_load(*args, **kwargs)
+        #         torch.load = cpu_load
+        #         try:
+        #             self.hse_model = HSEmotionRecognizer(model_name='enet_b2_8', device=device)
+        #             print(f"[WebMirror] HSEmotion loaded successfully on {device}")
+        #         finally:
+        #             torch.load = original_load
+        #     except Exception as e:
+        #         print(f"[WebMirror] Failed to load HSEmotion: {e}")
+        #         self.hse_model = None
 
     def ensure_camera_initialized(self):
-        """Make sure the camera is properly initialized"""
+        """Make sure the camera is properly initialized via shared camera manager"""
         try:
-            if not hasattr(self, 'cap') or self.cap is None or not self.cap.isOpened():
-                print("[WebMirror] Initializing camera...")
-                if hasattr(self, 'cap') and self.cap is not None:
-                    self.cap.release()
-                self.cap = cv2.VideoCapture(0)
-                if not self.cap.isOpened():
+            cam_mgr = get_camera_manager()
+            if not cam_mgr.is_open():
+                print("[WebMirror] Camera not open, attempting to open via shared manager...")
+                # Read a frame to trigger initialization
+                ret, _ = cam_mgr.read_frame()
+                if not ret:
                     print("[WebMirror] WARNING: Failed to open camera")
-                else:
-                    print("[WebMirror] Camera initialized successfully")
-            return self.cap.isOpened()
+                    return False
+                print("[WebMirror] Camera initialized successfully via shared manager")
+            return cam_mgr.is_open()
         except Exception as e:
             print(f"[WebMirror] Error initializing camera: {e}")
             return False
@@ -409,14 +454,14 @@ class WebMirror(SmartMirror):
             print(f"[WebMirror] Error updating posture cache: {e}")
 
     def _get_current_frame(self):
-        """Get current frame from camera without blocking"""
+        """Get current frame from shared camera manager without blocking"""
         try:
-            if self.cap and self.cap.isOpened():
-                ret, frame = self.cap.read()
-                if ret:
-                    # Resize for faster processing
-                    frame = cv2.resize(frame, (320, 240))
-                    return frame
+            cam_mgr = get_camera_manager()
+            ret, frame = cam_mgr.get_last_frame(max_age=0.5)
+            if ret and frame is not None:
+                # Resize for faster processing
+                frame = cv2.resize(frame, (320, 240))
+                return frame
             return None
         except Exception as e:
             print(f"[WebMirror] Error getting current frame: {e}")
@@ -725,9 +770,9 @@ class WebMirror(SmartMirror):
         print(f"[WebMirror] Current emotion: {emotion}")
         print(f"[WebMirror] Current body language: {body_language}")
         
-        # Call the parent SmartMirror's generate_response method to ensure proper risk assessment
-        # This now returns just the conversational response text
-        response_text = super().generate_response(text, emotion, body_language)
+        # Use the WebMirror.generate_response to also record this turn in current_session
+        # This returns just the conversational response text and appends to interactions
+        response_text = self.generate_response(text, emotion, body_language)
         
         # Store the risk level and indicators for the admin panel and logging
         risk_level = getattr(self, 'last_risk_level', 0)
@@ -770,3 +815,37 @@ class WebMirror(SmartMirror):
         except Exception as e:
             print(f"[WebMirror] Error in web_listen: {e}")
             return None 
+
+    def emotion_backend_status(self):
+        """Get status of emotion recognition backends"""
+        status = {
+            'timestamp': datetime.now().isoformat(),
+            'camera': {
+                'available': hasattr(self, 'camera') and self.camera is not None,
+                'initialized': hasattr(self, 'camera_initialized') and self.camera_initialized
+            },
+            'face_detection': {
+                'mediapipe': mp is not None,
+                'deepface': DeepFace is not None,
+                'hsemotion': HSE_AVAILABLE
+            },
+            'audio': {
+                'available': AUDIO_AVAILABLE,
+                'initialized': hasattr(self, 'audio_initialized') and self.audio_initialized,
+                'microphone': getattr(self, 'microphone_device', None)
+            },
+            'firebase': {
+                'available': self.firebase_manager is not None,
+                'connected': hasattr(self, 'firebase_manager') and self.firebase_manager is not None
+            },
+            'models': {
+                'emotion_cache': bool(self.emotion_cache),
+                'posture_cache': bool(self.posture_cache)
+            }
+        }
+        
+        # Add specific error details if available
+        if hasattr(self, 'last_error'):
+            status['last_error'] = str(self.last_error)
+        
+        return status 

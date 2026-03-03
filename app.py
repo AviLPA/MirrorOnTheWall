@@ -4,31 +4,10 @@ import logging
 import cv2
 import time
 import base64
+import json
+import shutil
 from dotenv import load_dotenv
 from openai import OpenAI
-
-# Temporary compatibility shim for httpx>=0.28 where Client/AsyncClient removed 'proxies' kwarg
-# Some OpenAI SDK versions still pass 'proxies', which crashes on Render if httpx is new.
-try:
-    import httpx  # type: ignore
-
-    _orig_httpx_client_init = httpx.Client.__init__
-    def _shim_httpx_client_init(self, *args, **kwargs):  # noqa: D401
-        # Drop unsupported kwargs to avoid TypeError on newer httpx
-        kwargs.pop('proxies', None)
-        return _orig_httpx_client_init(self, *args, **kwargs)
-
-    httpx.Client.__init__ = _shim_httpx_client_init  # type: ignore
-
-    if hasattr(httpx, 'AsyncClient'):
-        _orig_httpx_asyncclient_init = httpx.AsyncClient.__init__  # type: ignore
-        def _shim_httpx_asyncclient_init(self, *args, **kwargs):  # noqa: D401
-            kwargs.pop('proxies', None)
-            return _orig_httpx_asyncclient_init(self, *args, **kwargs)
-        httpx.AsyncClient.__init__ = _shim_httpx_asyncclient_init  # type: ignore
-except Exception:
-    # If anything goes wrong, proceed without shim
-    pass
 import speech_recognition as sr
 import numpy as np
 import tempfile
@@ -42,8 +21,26 @@ load_dotenv()
 # Initialize variables for OpenAI client
 client = None
 
-# Debug: show if OPENAI_API_KEY is visible in environment (without printing it)
-print(f"Env OPENAI_API_KEY present: {bool(os.environ.get('OPENAI_API_KEY'))}")
+# #region agent log
+_AGENT_DEBUG_LOG_PATH = "/Users/avicomputer/Desktop/AI mirror take 2/.cursor/debug.log"
+def _agent_log(hypothesisId: str, location: str, message: str, data: dict | None = None) -> None:
+    """Append a single NDJSON debug line. Never log secrets/PII."""
+    payload = {
+        "sessionId": "debug-session",
+        "runId": os.environ.get("MIRROR_DEBUG_RUNID", "run1"),
+        "hypothesisId": hypothesisId,
+        "location": location,
+        "message": message,
+        "data": data or {},
+        "timestamp": int(time.time() * 1000),
+    }
+    try:
+        os.makedirs(os.path.dirname(_AGENT_DEBUG_LOG_PATH), exist_ok=True)
+        with open(_AGENT_DEBUG_LOG_PATH, "a", encoding="utf-8") as f:
+            f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+# #endregion
 
 # Try to import config - add error handling
 try:
@@ -52,7 +49,7 @@ try:
     client = OpenAI(api_key=OPENAI_API_KEY)
     # Ensure env var is set so downstream libs (e.g., LangChain) use the same key
     os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
-    print("OpenAI client initialized with API key from config.py")
+    print(f"OpenAI client initialized with API key from config.py")
 except ImportError:
     print("""
     Error: config.py not found or OPENAI_API_KEY not defined!
@@ -60,14 +57,29 @@ except ImportError:
     2. Make sure it contains: OPENAI_API_KEY = "your-api-key-here"
     """)
     # Try to get from environment variable as fallback
-    api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("openai_api_key") or os.environ.get("OpenAI_API_KEY")
+    api_key = os.environ.get("OPENAI_API_KEY")
     if api_key:
         print("Using OPENAI_API_KEY from environment variables instead")
         client = OpenAI(api_key=api_key)
         # Normalize env var for all libraries
         os.environ["OPENAI_API_KEY"] = api_key
     else:
-        print("WARNING: No OPENAI_API_KEY found in environment. Set it in Render service env vars.")
+        print("WARNING: No OpenAI API key found! Speech recognition may not work.")
+
+# #region agent log
+try:
+    _agent_log(
+        hypothesisId="A",
+        location="app.py:openai_init",
+        message="OpenAI client init status",
+        data={
+            "client_initialized": bool(client),
+            "has_env_openai_key": bool(os.environ.get("OPENAI_API_KEY")),
+        },
+    )
+except Exception:
+    pass
+# #endregion
 
 # Move the configure_logging function definition to the top
 def configure_logging():
@@ -106,7 +118,9 @@ app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 
 # Global variables
 mirror = None
-camera = None
+
+# Use shared camera manager instead of local camera variable
+from camera_manager import get_camera_manager
 
 # Try to import Firebase
 try:
@@ -123,6 +137,22 @@ except Exception as e:
 
 def start_mirror(user_id=None):
     global mirror, camera
+
+    # #region agent log
+    try:
+        _agent_log(
+            hypothesisId="C",
+            location="app.py:start_mirror:entry",
+            message="start_mirror called",
+            data={
+                "user_id_provided": bool(user_id),
+                "user_id_is_guest": (str(user_id) == "guest") if user_id is not None else None,
+                "mirror_already_initialized": mirror is not None,
+            },
+        )
+    except Exception:
+        pass
+    # #endregion
     
     # If mirror is already initialized, just update the user_id
     if mirror is not None:
@@ -154,15 +184,8 @@ def start_mirror(user_id=None):
         mirror.recording_start_time = None
         mirror.selected_mic_index = None
         
-        # Initialize the camera for web streaming if not already initialized
-        # Allow disabling camera on platforms without hardware (e.g., Render) via env flag
-        if os.environ.get('DISABLE_CAMERA', '0') != '1':
-            if camera is None or not camera.isOpened():
-                camera = cv2.VideoCapture(0)
-                if not camera.isOpened():
-                    logger.error("Could not open camera")
-                else:
-                    logger.info("Camera initialized successfully")
+        # Camera will be initialized by WebMirror when needed
+        logger.info("Camera initialization deferred to WebMirror")
         
         logger.info("Mirror initialized successfully")
         return True
@@ -170,34 +193,31 @@ def start_mirror(user_id=None):
         logger.error(f"Error starting mirror: {e}")
         import traceback
         logger.error(traceback.format_exc())
+
+        # #region agent log
+        try:
+            _agent_log(
+                hypothesisId="C",
+                location="app.py:start_mirror:exception",
+                message="start_mirror failed",
+                data={
+                    "error_type": type(e).__name__,
+                    "error_str": str(e)[:200],
+                },
+            )
+        except Exception:
+            pass
+        # #endregion
         return False
 
 def generate_frames():
-    """Generate camera frames for streaming"""
-    global camera
-    
-    # If camera is not initialized, try to initialize it
-    if camera is None or not camera.isOpened():
-        try:
-            camera = cv2.VideoCapture(0)
-            if not camera.isOpened():
-                logger.error("Could not open camera")
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + b'' + b'\r\n')
-                return
-        except Exception as e:
-            logger.error(f"Error initializing camera: {e}")
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + b'' + b'\r\n')
-            return
+    """Generate camera frames for streaming using shared camera manager"""
+    cam_mgr = get_camera_manager()
     
     while True:
-        success, frame = camera.read()
-        if not success:
+        success, frame = cam_mgr.read_frame()
+        if not success or frame is None:
             logger.error("Failed to read from camera")
-            # Try to reinitialize camera
-            camera.release()
-            camera = cv2.VideoCapture(0)
             time.sleep(1)
             continue
         
@@ -206,19 +226,19 @@ def generate_frames():
         
         # Convert to JPEG
         ret, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
+        frame_bytes = buffer.tobytes()
         
         # Yield the frame in the response
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
         
         # Add a small delay to control frame rate
         time.sleep(0.03)  # ~30 FPS
 
 @app.route('/')
 def index():
-    # Initialize mirror and camera on first page load
-    global mirror, camera
+    # Initialize mirror on first page load
+    global mirror
     if mirror is None:
         # When called from a route, we can safely pass the session user_id
         user_id = session.get('user_id')
@@ -230,14 +250,8 @@ def index():
 
 @app.route('/video_feed')
 def video_feed():
-    """Route for streaming video from the camera"""
-    # Make sure camera is initialized
-    global camera
-    if camera is None or not camera.isOpened():
-        if camera is not None:
-            camera.release()
-        camera = cv2.VideoCapture(0)
-    
+    """Route for streaming video from the camera using shared camera manager"""
+    # Camera manager handles initialization internally
     return Response(generate_frames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
@@ -414,6 +428,21 @@ def analyze():
     
     # Use guest user if not logged in
     user_id = session.get('user_id', 'guest')
+
+    # #region agent log
+    try:
+        _agent_log(
+            hypothesisId="B",
+            location="app.py:analyze:entry",
+            message="/analyze called",
+            data={
+                "user_id_is_guest": user_id == "guest",
+                "mirror_is_none": mirror is None,
+            },
+        )
+    except Exception:
+        pass
+    # #endregion
     
     if mirror is None:
         success = start_mirror(user_id)
@@ -443,40 +472,34 @@ def analyze():
                 "posture": ["relaxed"]
             }, 500)
             
-        # Prefer client-provided frame; if none, try camera only if available
-        data = request.get_json(silent=True) or {}
-        provided_image_b64 = data.get('image')
-        frame = None
-        if provided_image_b64:
-            try:
-                # Support data URLs or raw base64
-                if 'base64,' in provided_image_b64:
-                    provided_image_b64 = provided_image_b64.split('base64,', 1)[1]
-                decoded = base64.b64decode(provided_image_b64)
-                np_arr = np.frombuffer(decoded, np.uint8)
-                frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-            except Exception as decode_err:
-                logger.error(f"Error decoding provided image: {decode_err}")
+        # Use shared camera manager instead of mirror.cap
+        cam_mgr = get_camera_manager()
+        ret, frame = cam_mgr.get_last_frame(max_age=0.5)
 
-        if frame is None:
-            # Fallback to server camera if not disabled
-            if os.environ.get('DISABLE_CAMERA', '0') == '1':
-                return json_response({
-                    "success": False,
-                    "error": "No image provided and camera disabled",
-                    "emotion": "neutral",
-                    "posture": ["relaxed"]
-                }, 400)
-
-            ret, frame = mirror.cap.read() if hasattr(mirror, 'cap') else (False, None)
-            if not ret or frame is None:
-                logger.error("Failed to capture frame from camera")
-                return json_response({
-                    "success": False,
-                    "error": "Failed to capture frame",
-                    "emotion": "neutral",
-                    "posture": ["relaxed"]
-                }, 500)
+        # #region agent log
+        try:
+            _agent_log(
+                hypothesisId="B",
+                location="app.py:analyze:camera",
+                message="Camera init/frame capture status",
+                data={
+                    "using_shared_camera_manager": True,
+                    "cam_mgr_is_open": cam_mgr.is_open(),
+                    "frame_capture_ok": bool(ret),
+                    "frame_shape": (list(frame.shape) if (ret and hasattr(frame, "shape")) else None),
+                },
+            )
+        except Exception:
+            pass
+        # #endregion
+        if not ret or frame is None:
+            logger.error("Failed to capture frame from camera")
+            return json_response({
+                "success": False,
+                "error": "Failed to capture frame",
+                "emotion": "neutral",
+                "posture": ["relaxed"]
+            }, 500)
             
         # Flip the frame horizontally for a later selfie-view display
         frame = cv2.flip(frame, 1)
@@ -617,18 +640,16 @@ def debug_emotion():
     if 'user_id' not in session:
         return jsonify({"error": "Not logged in"})
         
-    global mirror, camera
+    global mirror
     if mirror is None:
         success = start_mirror(session.get('user_id'))
         if not success:
             return jsonify({"error": "Failed to start mirror"})
     
-    if camera is None:
-        camera = cv2.VideoCapture(0)
-    
-    # Capture a frame
-    ret, frame = camera.read()
-    if not ret:
+    # Use shared camera manager
+    cam_mgr = get_camera_manager()
+    ret, frame = cam_mgr.read_frame()
+    if not ret or frame is None:
         return jsonify({"error": "Failed to capture frame"})
     
     # Flip for mirror effect
@@ -649,6 +670,38 @@ def debug_emotion():
         "emotion": emotion,
         "frame": frame_b64
     })
+
+@app.route('/emotion_status', methods=['GET'])
+def emotion_status():
+    """Get status of emotion recognition backends"""
+    try:
+        global mirror
+        
+        if mirror is None:
+            # Try to start mirror if not running
+            user_id = session.get('user_id', 'guest')
+            success = start_mirror(user_id)
+            if not success:
+                return jsonify({
+                    "error": "Failed to initialize mirror",
+                    "timestamp": datetime.now().isoformat()
+                })
+        
+        # Get status from mirror
+        status = mirror.emotion_backend_status()
+        
+        return jsonify({
+            "success": True,
+            "status": status
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting emotion status: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        })
 
 @app.route('/list_microphones', methods=['GET'])
 def list_microphones():
@@ -695,6 +748,22 @@ def process_web_speech():
     try:
         data = request.json
         transcript = data.get('transcript')
+
+        # #region agent log
+        try:
+            _agent_log(
+                hypothesisId="A",
+                location="app.py:process_web_speech:entry",
+                message="/process_web_speech received transcript",
+                data={
+                    "has_client": bool(client),
+                    "has_transcript": bool(transcript),
+                    "transcript_len": (len(transcript) if isinstance(transcript, str) else None),
+                },
+            )
+        except Exception:
+            pass
+        # #endregion
         
         if not transcript:
             return jsonify({
@@ -719,19 +788,7 @@ def process_web_speech():
         risk_indicators = getattr(mirror, 'last_risk_indicators', [])
         is_emergency = getattr(mirror, 'last_is_emergency', False)
         
-        # Add to current session's interactions
-        if hasattr(mirror, 'current_session'):
-            interaction = {
-                'timestamp': datetime.now(),
-                'emotion': emotion,
-                'posture': posture,
-                'user_input': transcript,
-                'ai_output': response_text,
-                'risk_level': risk_level,
-                'risk_indicators': risk_indicators,
-                'is_emergency': is_emergency
-            }
-            mirror.current_session['interactions'].append(interaction)
+        # WebMirror.generate_response already appends to current_session
         
         # Generate audio response
         try:
@@ -758,11 +815,35 @@ def process_web_speech():
             os.remove(temp_audio_path)
             
             logger.info("Audio generated successfully")
+
+            # #region agent log
+            try:
+                _agent_log(
+                    hypothesisId="A",
+                    location="app.py:process_web_speech:tts",
+                    message="TTS generation result",
+                    data={"tts_ok": True, "audio_format": audio_format},
+                )
+            except Exception:
+                pass
+            # #endregion
             
         except Exception as e:
             logger.error(f"Error generating audio: {str(e)}")
             audio_data = None
             audio_format = None
+
+            # #region agent log
+            try:
+                _agent_log(
+                    hypothesisId="A",
+                    location="app.py:process_web_speech:tts",
+                    message="TTS generation result",
+                    data={"tts_ok": False, "error_type": type(e).__name__, "error_str": str(e)[:200]},
+                )
+            except Exception:
+                pass
+            # #endregion
         
         # Include audio data in the response if available
         result = {
@@ -806,6 +887,20 @@ def stop_listening():
     
     try:
         # Check if we received an audio file
+        # #region agent log
+        try:
+            _agent_log(
+                hypothesisId="D",
+                location="app.py:stop_listening:entry",
+                message="/stop_listening received request",
+                data={
+                    "has_audio_file_field": ("audio" in request.files),
+                    "ffmpeg_in_path": bool(shutil.which("ffmpeg")),
+                },
+            )
+        except Exception:
+            pass
+        # #endregion
         if 'audio' not in request.files:
             return jsonify({"success": False, "error": "No audio file received"})
         
@@ -829,164 +924,135 @@ def stop_listening():
                 "response": "I didn't hear anything. Could you try speaking louder?"
             })
         
-        # Try direct transcription of WebM first (avoids ffmpeg dependency)
-        transcript = None
-        wav_path = None
+        # Convert webm to wav
         try:
-            with open(webm_path, "rb") as audio_file:
-                logger.info("Attempting direct Whisper transcription of WebM")
-                transcription = client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio_file
-                )
-                transcript = getattr(transcription, 'text', None) or getattr(transcription, 'data', None)
-                logger.info(f"Direct WebM transcription result: {bool(transcript)}")
-        except Exception as direct_err:
-            logger.warning(f"Direct WebM transcription failed: {direct_err}")
-
-        if not transcript:
-            # Convert webm to wav (fallback when ffmpeg is available)
-            try:
-                import subprocess
-                wav_path = os.path.join(temp_dir, 'recording.wav')
-                
-                # Debug: List the file to make sure it exists
-                if not os.path.exists(webm_path):
-                    logger.error(f"WebM file doesn't exist at: {webm_path}")
-                    return jsonify({"success": False, "error": "WebM file not saved correctly"})
-                    
-                logger.info(f"About to convert: {webm_path} to {wav_path}")
-                
-                # Use ffmpeg to convert webm to wav
-                result = subprocess.run(
-                    ['ffmpeg', '-y', '-i', webm_path, '-ar', '16000', '-ac', '1', wav_path],
-                    check=True, capture_output=True
-                )
-                
-                logger.info(f"Conversion stdout: {result.stdout}")
-                logger.info(f"Conversion stderr: {result.stderr}")
-                
-                if not os.path.exists(wav_path):
-                    logger.error("WAV file wasn't created by ffmpeg")
-                    return jsonify({"success": False, "error": "Failed to convert audio format"})
-                    
-                logger.info(f"Converted to WAV: {wav_path}, size: {os.path.getsize(wav_path)} bytes")
-                
-                # Use our standalone speech recognition function
-                transcript = recognize_speech_from_file(wav_path)
-                logger.info(f"Initial transcript attempt: {transcript}")
-                
-                if not transcript:
-                    # If our function couldn't recognize speech, try the mirror methods
-                    logger.info("Initial transcript failed, trying mirror methods")
-                    if hasattr(mirror, 'process_audio_file'):
-                        transcript = mirror.process_audio_file(wav_path)
-                        logger.info(f"Transcript from mirror.process_audio_file: {transcript}")
-                    elif hasattr(mirror, 'whisper_process'):
-                        transcript = mirror.whisper_process(wav_path)
-                        logger.info(f"Transcript from mirror.whisper_process: {transcript}")
-                    elif hasattr(mirror, 'whisper_transcribe'):
-                        # Try direct whisper transcription as a last resort
-                        try:
-                            with open(wav_path, "rb") as audio_file:
-                                transcription = client.audio.transcriptions.create(
-                                    model="whisper-1",
-                                    file=audio_file
-                                )
-                                transcript = transcription.text
-                                logger.info(f"Direct Whisper transcript: {transcript}")
-                        except Exception as e:
-                            logger.error(f"Direct Whisper transcription failed: {e}")
-            except subprocess.CalledProcessError as e:
-                logger.error(f"FFmpeg error: {e}")
-                logger.error(f"FFmpeg stderr: {e.stderr.decode() if hasattr(e, 'stderr') else 'No error output'}")
-                # If ffmpeg is unavailable, try one more time to send webm to Whisper
-                try:
-                    with open(webm_path, "rb") as audio_file:
-                        transcription = client.audio.transcriptions.create(
-                            model="whisper-1",
-                            file=audio_file
-                        )
-                        transcript = getattr(transcription, 'text', None)
-                        logger.info(f"Fallback direct WebM transcript: {transcript}")
-                except Exception as final_err:
-                    logger.error(f"Final direct WebM transcription failed: {final_err}")
-                    return jsonify({"success": False, "error": "Failed to convert/transcribe audio"})
+            import subprocess
+            wav_path = os.path.join(temp_dir, 'recording.wav')
             
-        # If we still don't have a transcript, use fallback
-        if not transcript:
-            logger.warning("All speech recognition methods failed")
-            return jsonify({
-                "success": False,
-                "error": "Could not understand speech",
-                "transcript": "",
-                "response": "I couldn't understand what you said. Could you try speaking more clearly?"
-            })
-        
-        # Generate response using the transcript (works for both direct and converted paths)
-        if hasattr(mirror, 'web_generate_response'):
-            response_text = mirror.web_generate_response(transcript)
-        elif hasattr(mirror, 'generate_response'):
-            emotion = getattr(mirror, 'locked_emotion', 'neutral')
-            posture = getattr(mirror, 'locked_body_language', [])
-            response_text = mirror.generate_response(transcript, emotion, posture)
-        else:
-            response_text = f"I heard you say: '{transcript}', but I'm not sure how to respond right now."
-        
-        # Extract risk data for UI display
-        risk_level = getattr(mirror, 'last_risk_level', 0)
-        risk_indicators = getattr(mirror, 'last_risk_indicators', [])
-        is_emergency = getattr(mirror, 'last_is_emergency', False)
-        
-        # Generate audio for the response
-        audio_data = None
-        audio_format = "mp3"
-        
-        try:
-            # Generate audio with OpenAI's TTS API
-            audio_response = client.audio.speech.create(
-                model="tts-1",
-                voice="sage", 
-                input=response_text
+            # Debug: List the file to make sure it exists
+            if not os.path.exists(webm_path):
+                logger.error(f"WebM file doesn't exist at: {webm_path}")
+                return jsonify({"success": False, "error": "WebM file not saved correctly"})
+                
+            logger.info(f"About to convert: {webm_path} to {wav_path}")
+            
+            # Use ffmpeg to convert webm to wav
+            result = subprocess.run(
+                ['ffmpeg', '-y', '-i', webm_path, '-ar', '16000', '-ac', '1', wav_path],
+                check=True, capture_output=True
             )
             
-            # Save to temporary file
-            temp_audio_path = "temp_fallback_audio.mp3"
-            audio_response.stream_to_file(temp_audio_path)
+            logger.info(f"Conversion stdout: {result.stdout}")
+            logger.info(f"Conversion stderr: {result.stderr}")
             
-            # Read the data as base64 for sending to client
-            with open(temp_audio_path, "rb") as audio_file:
-                audio_data = base64.b64encode(audio_file.read()).decode('utf-8')
+            if not os.path.exists(wav_path):
+                logger.error("WAV file wasn't created by ffmpeg")
+                return jsonify({"success": False, "error": "Failed to convert audio format"})
+                
+            logger.info(f"Converted to WAV: {wav_path}, size: {os.path.getsize(wav_path)} bytes")
             
-            logger.info(f"Generated audio response, size: {os.path.getsize(temp_audio_path)} bytes")
-        
-        except Exception as audio_error:
-            logger.error(f"Error generating audio response: {audio_error}")
-            # Continue without audio
-        
-        # Clean up temporary files
-        try:
-            for path in [webm_path, wav_path]:
-                if path and os.path.exists(path):
-                    os.remove(path)
-        except Exception as e:
-            logger.error(f"Error removing temporary files: {e}")
-        
-        # Return success with transcript, response, and audio data
-        result = {
-            "success": True,
-            "transcript": transcript,
-            "response": response_text,
-            "risk_level": risk_level,
-            "risk_indicators": risk_indicators,
-            "is_emergency": is_emergency
-        }
-        
-        if audio_data:
-            result["audio_data"] = audio_data
-            result["audio_format"] = audio_format
-        
-        return jsonify(result)
+            # Use our standalone speech recognition function
+            transcript = recognize_speech_from_file(wav_path)
+            logger.info(f"Initial transcript attempt: {transcript}")
+            
+            if not transcript:
+                # If our function couldn't recognize speech, try the mirror methods
+                logger.info("Initial transcript failed, trying mirror methods")
+                if hasattr(mirror, 'process_audio_file'):
+                    transcript = mirror.process_audio_file(wav_path)
+                    logger.info(f"Transcript from mirror.process_audio_file: {transcript}")
+                elif hasattr(mirror, 'whisper_process'):
+                    transcript = mirror.whisper_process(wav_path)
+                    logger.info(f"Transcript from mirror.whisper_process: {transcript}")
+                elif hasattr(mirror, 'whisper_transcribe'):
+                    # Try direct whisper transcription as a last resort
+                    try:
+                        with open(wav_path, "rb") as audio_file:
+                            transcription = client.audio.transcribe("whisper-1", audio_file)
+                            transcript = transcription.text
+                            logger.info(f"Direct Whisper transcript: {transcript}")
+                    except Exception as e:
+                        logger.error(f"Direct Whisper transcription failed: {e}")
+            
+            # If we still don't have a transcript, use fallback
+            if not transcript:
+                logger.warning("All speech recognition methods failed")
+                return jsonify({
+                    "success": False,
+                    "error": "Could not understand speech",
+                    "transcript": "",
+                    "response": "I couldn't understand what you said. Could you try speaking more clearly?"
+                })
+            
+            # Generate response using the transcript
+            if hasattr(mirror, 'web_generate_response'):
+                response_text = mirror.web_generate_response(transcript)
+            elif hasattr(mirror, 'generate_response'):
+                emotion = getattr(mirror, 'locked_emotion', 'neutral')
+                posture = getattr(mirror, 'locked_body_language', [])
+                response_text = mirror.generate_response(transcript, emotion, posture)
+            else:
+                response_text = f"I heard you say: '{transcript}', but I'm not sure how to respond right now."
+            
+            # Extract risk data for UI display
+            risk_level = getattr(mirror, 'last_risk_level', 0)
+            risk_indicators = getattr(mirror, 'last_risk_indicators', [])
+            is_emergency = getattr(mirror, 'last_is_emergency', False)
+            
+            # Generate audio for the response
+            audio_data = None
+            audio_format = "mp3"
+            
+            try:
+                # Generate audio with OpenAI's TTS API
+                audio_response = client.audio.speech.create(
+                    model="tts-1",
+                    voice="sage", 
+                    input=response_text
+                )
+                
+                # Save to temporary file
+                temp_audio_path = "temp_fallback_audio.mp3"
+                audio_response.stream_to_file(temp_audio_path)
+                
+                # Read the data as base64 for sending to client
+                with open(temp_audio_path, "rb") as audio_file:
+                    audio_data = base64.b64encode(audio_file.read()).decode('utf-8')
+                
+                logger.info(f"Generated audio response, size: {os.path.getsize(temp_audio_path)} bytes")
+            
+            except Exception as audio_error:
+                logger.error(f"Error generating audio response: {audio_error}")
+                # Continue without audio
+            
+            # Clean up temporary files
+            try:
+                for path in [webm_path, wav_path]:
+                    if os.path.exists(path):
+                        os.remove(path)
+            except Exception as e:
+                logger.error(f"Error removing temporary files: {e}")
+            
+            # Return success with transcript, response, and audio data
+            result = {
+                "success": True,
+                "transcript": transcript,
+                "response": response_text,
+                "risk_level": risk_level,
+                "risk_indicators": risk_indicators,
+                "is_emergency": is_emergency
+            }
+            
+            if audio_data:
+                result["audio_data"] = audio_data
+                result["audio_format"] = audio_format
+            
+            return jsonify(result)
+            
+        except subprocess.CalledProcessError as e:
+            logger.error(f"FFmpeg error: {e}")
+            logger.error(f"FFmpeg stderr: {e.stderr.decode() if hasattr(e, 'stderr') else 'No error output'}")
+            return jsonify({"success": False, "error": "Failed to convert audio format"})
             
     except Exception as e:
         logger.error(f"Error processing audio: {e}")
@@ -1032,19 +1098,7 @@ def text_input():
         risk_indicators = getattr(mirror, 'last_risk_indicators', [])
         is_emergency = getattr(mirror, 'last_is_emergency', False)
         
-        # Add to current session's interactions
-        if hasattr(mirror, 'current_session'):
-            interaction = {
-                'timestamp': datetime.now(),
-                'emotion': emotion,
-                'posture': posture,
-                'user_input': text,
-                'ai_output': response_text,
-                'risk_level': risk_level,
-                'risk_indicators': risk_indicators,
-                'is_emergency': is_emergency
-            }
-            mirror.current_session['interactions'].append(interaction)
+        # WebMirror.generate_response already appends to current_session
         
         # Optionally generate TTS for text-only input
         audio_data = None
@@ -1218,11 +1272,11 @@ def recognize_speech_from_file(audio_file_path):
 
 def cleanup():
     """Cleanup resources before shutdown"""
-    global mirror, camera
+    global mirror
     
-    # Release camera
-    if camera is not None:
-        camera.release()
+    # Release shared camera
+    cam_mgr = get_camera_manager()
+    cam_mgr.release()
         
     # Cleanup mirror instance
     if mirror is not None:
